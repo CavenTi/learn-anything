@@ -45,7 +45,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src/",
-    "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build"
   },
   "engines": {
