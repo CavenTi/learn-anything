@@ -11,24 +11,24 @@ Generate skill and command files for **30+ AI tools** (Claude Code, Cursor, Gemi
 npm install -g github:ChenChenyaqi/learn-anything
 
 # Initialize in your project (interactive — select your AI tools)
-learn-anything init
+npx learn-anything init
 
 # Or specify tools directly
-learn-anything init --tools claude
+npx learn-anything init --tools claude
 
 # Chinese terminal output
-learn-anything init --lang zh-CN
+npx learn-anything init --lang zh-CN
 ```
 
 After init, your AI assistant gains five learning commands:
 
-| Command | What it does |
-|---------|-------------|
-| `/learn:topic <topic-name>` | Initialize a topic, generate a knowledge map, track progress |
-| `/learn:explain <concept-name>` | Recursive Socratic deep-dive into a concept |
-| `/learn:practice <concept-name>` | TDD-style coding exercises with Socratic feedback |
-| `/learn:review [topic-name]` | Review progress, spaced repetition recommendations |
-| `/learn:status [topic-name]` | Visualize learning state as a knowledge map heatmap |
+| Command                          | What it does                                                 |
+| -------------------------------- | ------------------------------------------------------------ |
+| `/learn:topic <topic-name>`      | Initialize a topic, generate a knowledge map, track progress |
+| `/learn:explain <concept-name>`  | Recursive Socratic deep-dive into a concept                  |
+| `/learn:practice <concept-name>` | TDD-style coding exercises with Socratic feedback            |
+| `/learn:review [topic-name]`     | Review progress, spaced repetition recommendations           |
+| `/learn:status [topic-name]`     | Visualize learning state as a knowledge map heatmap          |
 
 ## Learning Workflows
 
