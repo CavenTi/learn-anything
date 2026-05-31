@@ -313,7 +313,7 @@ The user submits their code or answer in the chat. Review it using the framework
    - Set status to needs_practice
    - Note specific areas to focus on
 
-**After providing your feedback**, immediately save the session record. ⚠️ Do this in the SAME turn — do NOT wait for the user's next message.
+**In the same turn as your feedback**, save the session record. ⚠️ Do NOT wait for the user's next message — feedback text and file writes must happen together.
 
 - Use the Write tool to create \`./.learn/topics/<topic-name>/sessions/<concept-name>-practice-YYYY-MM-DD.md\` — match the user's language (see Step 5 for naming rules and format)
 
@@ -380,8 +380,8 @@ Follow the workflow defined in the skill:
 2. Assess difficulty level based on state.yaml (beginner/intermediate/challenge)
 3. Project Mode: use Bash to create exercise dir → use Write to create README.md + starter file → tell user to open in IDE
    Chat Mode: generate exercise in chat (background → requirements → code template → hint)
-4. Project Mode: use Read to review user's code file → optionally use Bash to run it → provide structured feedback → immediately use Write to save session record, Edit to update state.yaml
-   Chat Mode: review code submitted in chat → provide structured feedback → immediately use Write to save session record, Edit to update state.yaml`;
+4. Project Mode: use Read to review user's code file → optionally use Bash to run it → provide structured feedback, and in the same turn use Write to save session record + Edit to update state.yaml
+   Chat Mode: review code submitted in chat → provide structured feedback, and in the same turn use Write to save session record + Edit to update state.yaml`;
 
 export function getLearnPracticeSkillTemplate(): SkillTemplate {
   return {
