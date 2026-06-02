@@ -1,5 +1,7 @@
 # Learn Anything
 
+[English](./README.md) | [中文](./README.zh-CN.md)
+
 AI-powered recursive learning system — turns your AI coding assistant into an interactive tutor using the Socratic method and TDD-style exercises.
 
 Generate skill and command files for **30+ AI tools** (Claude Code, Cursor, Gemini CLI, Codex, Copilot, Windsurf, etc.), then use slash commands to systematically master any technical topic.
