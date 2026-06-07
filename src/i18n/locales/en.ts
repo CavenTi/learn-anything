@@ -31,5 +31,10 @@ export const en: LocaleMessages = {
     cmdLine: (cmd: string, desc: string) => `  ${cmd}${desc}`,
     interactiveSelectPrompt:
       'Select AI tools to generate skills for (space to select, enter to confirm):',
+    context7Prompt:
+      'Enable Context7 for documentation verification? (Provides on-demand access to official library docs)',
+    context7Enabled: '  📚 Context7 guidance enabled.',
+    context7SetupHint:
+      '  💡 To set up Context7 MCP, run `npx ctx7 setup` or visit https://context7.com/docs/resources/all-clients',
   },
 };

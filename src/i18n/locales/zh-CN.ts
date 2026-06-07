@@ -28,5 +28,9 @@ export const zhCN: LocaleMessages = {
     availableCommands: '可用的学习命令：',
     cmdLine: (cmd: string, desc: string) => `  ${cmd}${desc}`,
     interactiveSelectPrompt: '选择要生成技能的 AI 工具（空格选择，回车确认）：',
+    context7Prompt: '是否启用 Context7 进行文档验证？（提供按需访问官方库文档的能力）',
+    context7Enabled: '  📚 已启用 Context7 文档验证引导。',
+    context7SetupHint:
+      '  💡 配置 Context7 MCP：运行 `npx ctx7 setup` 或访问 https://context7.com/docs/resources/all-clients',
   },
 };
