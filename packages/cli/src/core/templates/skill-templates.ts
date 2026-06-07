@@ -20,3 +20,4 @@ export {
   getLearnStatusSkillTemplate,
   getLearnStatusCommandTemplate,
 } from './workflows/learn-status.js';
+export { getLearnQuizSkillTemplate, getLearnQuizCommandTemplate } from './workflows/learn-quiz.js';
