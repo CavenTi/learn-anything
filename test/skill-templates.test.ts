@@ -5,6 +5,7 @@ import {
   getLearnPracticeSkillTemplate,
   getLearnReviewSkillTemplate,
   getLearnStatusSkillTemplate,
+  getLearnQuizSkillTemplate,
 } from '../src/core/templates/skill-templates.js';
 import {
   getSkillTemplates,
@@ -17,9 +18,16 @@ import { CommandAdapterRegistry } from '../src/core/command-generation/registry.
 import { generateCommand, generateCommands } from '../src/core/command-generation/generator.js';
 
 describe('Skill Templates', () => {
-  it('should return 5 skill templates with required fields', () => {
+  it('should return all skill templates with required fields', () => {
     const templates = getSkillTemplates();
-    expect(templates).toHaveLength(5);
+    expect(templates.map((t) => t.workflowId)).toEqual([
+      'topic',
+      'explain',
+      'practice',
+      'review',
+      'status',
+      'quiz',
+    ]);
 
     for (const entry of templates) {
       expect(entry.template.name).toBeTruthy();
@@ -66,14 +74,28 @@ describe('Skill Templates', () => {
 });
 
 describe('Command Templates', () => {
-  it('should return 5 command templates', () => {
+  it('should return all command templates', () => {
     const templates = getCommandTemplates();
-    expect(templates).toHaveLength(5);
+    expect(templates.map((t) => t.id)).toEqual([
+      'topic',
+      'explain',
+      'practice',
+      'review',
+      'status',
+      'quiz',
+    ]);
   });
 
   it('should generate CommandContent array', () => {
     const contents = getCommandContents();
-    expect(contents).toHaveLength(5);
+    expect(contents.map((c) => c.id)).toEqual([
+      'topic',
+      'explain',
+      'practice',
+      'review',
+      'status',
+      'quiz',
+    ]);
     for (const c of contents) {
       expect(c.id).toBeTruthy();
       expect(c.name).toBeTruthy();
@@ -90,7 +112,7 @@ describe('Command Generation', () => {
 
     const contents = getCommandContents();
     const cmds = generateCommands(contents, adapter!);
-    expect(cmds).toHaveLength(5);
+    expect(cmds).toHaveLength(contents.length);
 
     for (const cmd of cmds) {
       expect(cmd.path.replace(/\\/g, '/')).toContain('.claude/commands/learn/');
@@ -130,6 +152,21 @@ describe('Command Generation', () => {
     expect(cmd.fileContent).toContain('description =');
     expect(cmd.fileContent).toContain('prompt = """');
   });
+
+  it.each(['claude', 'cursor', 'codex', 'gemini'])(
+    'should generate quiz command for %s',
+    (toolId) => {
+      const adapter = CommandAdapterRegistry.get(toolId);
+      expect(adapter).toBeDefined();
+
+      const quizContent = getCommandContents().find((content) => content.id === 'quiz');
+      expect(quizContent).toBeDefined();
+
+      const cmd = generateCommand(quizContent!, adapter!);
+      expect(cmd.path).toContain('quiz');
+      expect(cmd.fileContent).toContain('learn-anything-quiz');
+    },
+  );
 });
 
 describe('Skill Template Content Quality', () => {
@@ -169,6 +206,14 @@ describe('Skill Template Content Quality', () => {
     expect(t.instructions).toContain('status.mjs');
     expect(t.instructions).toContain('heatmap');
   });
+
+  it('quiz template should generate formal quiz documents', () => {
+    const t = getLearnQuizSkillTemplate();
+    expect(t.instructions).toContain('exercises.json');
+    expect(t.instructions).toContain('generate_html.py');
+    expect(t.instructions).toContain('generate_pdf.py');
+    expect(t.instructions).toContain('generate_docx.py');
+  });
 });
 
 // ── v1 Format: state.json and render.mjs integration ────────────────
@@ -179,6 +224,7 @@ describe('Skill Template v1 Format Compliance', () => {
     { name: 'topic', getter: getLearnTopicSkillTemplate },
     { name: 'explain', getter: getLearnExplainSkillTemplate },
     { name: 'practice', getter: getLearnPracticeSkillTemplate },
+    { name: 'quiz', getter: getLearnQuizSkillTemplate },
   ];
 
   // review should NOT run render.mjs (read-only workflow)
@@ -208,6 +254,7 @@ describe('Skill Template v1 Format Compliance', () => {
     { name: 'practice', getter: getLearnPracticeSkillTemplate },
     { name: 'review', getter: getLearnReviewSkillTemplate },
     { name: 'status', getter: getLearnStatusSkillTemplate },
+    { name: 'quiz', getter: getLearnQuizSkillTemplate },
   ];
 
   it.each(stateJsonTemplates.map((t) => ({ name: t.name })))(
@@ -225,6 +272,7 @@ describe('Skill Template v1 Format Compliance', () => {
     { name: 'explain', getter: getLearnExplainSkillTemplate },
     { name: 'practice', getter: getLearnPracticeSkillTemplate },
     { name: 'review', getter: getLearnReviewSkillTemplate },
+    { name: 'quiz', getter: getLearnQuizSkillTemplate },
   ];
 
   it.each(singleSourceTemplates.map((t) => ({ name: t.name })))(

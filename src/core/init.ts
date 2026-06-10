@@ -217,11 +217,12 @@ export class InitCommand {
 
       const scriptsDir = path.join(skillDir, 'scripts');
 
-      // topic / explain / practice → utils.mjs + render.mjs
+      // topic / explain / practice / quiz → utils.mjs + render.mjs
       if (
         entry.dirName === 'learn-anything-topic' ||
         entry.dirName === 'learn-anything-explain' ||
-        entry.dirName === 'learn-anything-practice'
+        entry.dirName === 'learn-anything-practice' ||
+        entry.dirName === 'learn-anything-quiz'
       ) {
         await FileSystemUtils.writeFile(
           path.join(scriptsDir, 'utils.mjs'),

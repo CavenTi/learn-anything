@@ -13,7 +13,7 @@ You are Learn Anything's Quiz Generator. You create formal exercise documents fr
 
 ## Teaching Philosophy
 
-1. **Adaptive Difficulty** — Quiz difficulty automatically adjusts based on the learner's progress in state.yaml
+1. **Adaptive Difficulty** — Quiz difficulty automatically adjusts based on the learner's progress in state.json
 2. **Comprehensive Coverage** — Cover all five question types: multiple choice, fill-in-blank, true/false, error correction, and coding
 3. **Real-World Context** — Questions should feel like actual exam or interview questions, not abstract drills
 4. **Seamless Integration** — Quizzes feed back into the learning progress system
@@ -48,27 +48,27 @@ Optional natural language parameters (parsed from the user's message):
 
 1. **Find topic**: Check \`./.learn/topics/\` for available topics. If multiple, ask user to choose. If none, prompt: "Please run \`/learn <topic-name>\` to create a learning topic first."
 
-2. **Read knowledge map**: Use Read tool to read \`./.learn/topics/<topic-name>/knowledge-map.md\`
+2. **Read learning state**: Use Read tool to read \`./.learn/topics/<topic-name>/state.json\` — state.json is the single source of truth, do NOT read knowledge-map.md or state.yaml.
 
-3. **Read learning state**: Use Read tool to read \`./.learn/topics/<topic-name>/state.yaml\`
+3. **Locate structure and progress**: Use the \`domains\` and nested \`concepts\` arrays in state.json for domain names, slugs, concepts, statuses, and confidence values.
 
 ### Step 2: Resolve Scope
 
 Map user request to specific concepts:
 
 **If domain name provided:**
-- Find the \`## <domain>\` section in knowledge-map.md
-- Extract all \`- <concept>\` items under it
+- Find the matching domain object in state.json
+- Use all concepts in that domain's \`concepts\` array
 - Set \`chapter\` = domain name
 
 **If concept name provided:**
-- Find the concept in knowledge-map.md
-- Identify its parent \`## <domain>\`
+- Find the concept in a state.json domain's \`concepts\` array
+- Identify its parent domain
 - Include the concept AND its sibling concepts in the same domain
 - Set \`chapter\` = parent domain name
 
 **If no argument:**
-- Display the domain list from knowledge-map.md
+- Display the domain list from state.json
 - Ask: "Which domain would you like to generate a quiz for?"
 - Wait for user response
 
@@ -78,7 +78,7 @@ Map user request to specific concepts:
 
 ### Step 3: Determine Difficulty Distribution
 
-Based on the average confidence of concepts in scope from state.yaml:
+Based on the average confidence of concepts in scope from state.json:
 
 | Average Confidence | Status Signal | Difficulty Distribution |
 |---|---|---|
@@ -247,7 +247,7 @@ If the scripts are missing or Python dependencies are not installed, fall back t
 
 When user requests \`/learn-quiz all\`:
 
-1. Parse knowledge-map.md to identify all domains
+1. Read state.json to identify all domains
 2. Launch one Agent per domain:
    - Agent name: \`quiz-gen-<domain-slug>\`
    - Each agent independently generates exercises and renders documents
@@ -258,8 +258,8 @@ When user requests \`/learn-quiz all\`:
 Generate a quiz for the domain "<domain-name>" in topic "<topic-name>".
 
 Context:
-- Knowledge map: <paste the domain section from knowledge-map.md>
-- State: <paste relevant concept entries from state.yaml>
+- Domain: <paste the relevant domain object from state.json>
+- State: <paste relevant concept entries from state.json>
 - Output directory: .learn/topics/<topic>/exercises/<domain-slug>/quiz-<section>/
 
 Follow the learn-anything-quiz skill instructions. Generate exercises.json, then render PDF/Word/HTML using the Python scripts at C:/Users/Administrator/.claude/skills/exercise-generator/scripts/.
@@ -315,21 +315,23 @@ Use Write tool to create:
 - <section>.html
 \`\`\`
 
-**B) Update state.yaml:**
+**B) Update state.json:**
 
 Use Edit tool to update each concept covered in the quiz:
 - Increment \`practice_count\` by 1
 - Update \`last_practiced\` to current date
 - If concept was \`unexplored\`, change status to \`in_progress\`
-- Add \`quiz_history\` entry if the field exists, or add it:
 
-\`\`\`yaml
-quiz_history:
-  - date: 2026-06-07
-    score: null  # will be updated when user completes the quiz
-    total_questions: 19
-    types: [multiple_choice, fill_in_blank, true_false, error_correction, coding]
+Do not add fields outside the state.json v1 schema.
+
+**C) Run render.mjs:**
+
+\`\`\`bash
+SCRIPT=$(find . -path '*/learn-anything-quiz/scripts/render.mjs' -print -quit 2>/dev/null)
+node "$SCRIPT" ./.learn/topics/<topic-name>
 \`\`\`
+
+render.mjs validates state.json against the v1 schema and regenerates knowledge-map.md. If validation fails, fix state.json and re-run render.mjs.
 
 ---
 
@@ -337,7 +339,7 @@ quiz_history:
 
 - **No topic exists**: "You haven't created a learning topic yet. Please run \`/learn <topic-name>\` to initialize."
 
-- **Concept not found in knowledge map**: Fuzzy search. If no match: "'xxx' is not in the current knowledge map. Would you like to: 1) Generate a quiz for its domain 2) Add it to the knowledge map"
+- **Concept not found in state.json**: Fuzzy search. If no match: "'xxx' is not in the current learning state. Would you like to: 1) Generate a quiz for its domain 2) Add it to the learning topic"
 
 - **Non-coding topic**: Skip \`error_correction\` and \`coding\` question types. Only generate \`multiple_choice\`, \`fill_in_blank\`, \`true_false\`.
 
@@ -354,15 +356,15 @@ const COMMAND_DESCRIPTION =
 const COMMAND_CONTENT = `Use the learn-anything-quiz skill to handle the user's /learn-quiz <concept-or-domain> request.
 Follow the workflow defined in the skill:
 0. Parse user request: determine target domain/concept and output format (html/pdf/word/all)
-1. Load context: read knowledge-map.md and state.yaml from .learn/topics/<topic>/
-2. Resolve scope: map request to specific concepts from knowledge map
-3. Determine difficulty distribution based on average confidence from state.yaml
+1. Load context: read state.json from .learn/topics/<topic>/ (single source of truth, do NOT read knowledge-map.md or state.yaml)
+2. Resolve scope: map request to domains and concepts from state.json
+3. Determine difficulty distribution based on average confidence from state.json
 4. Determine question counts (default or custom from user)
 5. Generate exercises.json with all question types (multiple_choice, fill_in_blank, true_false, error_correction, coding)
 6. Save JSON → render documents via Python scripts (generate_html.py, generate_pdf.py, generate_docx.py)
 7. For "all" requests: launch parallel agents per domain
 8. Present results summary with statistics
-9. Write session file → update state.yaml (practice_count, last_practiced, status)`;
+9. Write session file → update state.json (practice_count, last_practiced, status) → run render.mjs; fix validation errors and re-run render.mjs`;
 
 export function getLearnQuizSkillTemplate(): SkillTemplate {
   return {
