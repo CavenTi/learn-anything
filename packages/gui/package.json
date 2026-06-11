@@ -1,0 +1,13 @@
+{
+  "name": "learn-anything-gui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Learn Anything GUI (under construction)",
+  "homepage": "https://github.com/ChenChenyaqi/learn-anything",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChenChenyaqi/learn-anything"
+  },
+  "license": "AGPL-3.0-only",
+  "author": "yaqi chen"
+}

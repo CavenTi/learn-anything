@@ -11,47 +11,52 @@ The generated skills implement 5 learning workflows: topic (initialize a subject
 ## Commands
 
 ```bash
-pnpm build          # Compile TypeScript via tsc (runs node build.js)
-pnpm dev            # tsc --watch
-pnpm test           # Run all tests once (vitest run)
-pnpm test:watch     # Run tests in watch mode (vitest)
-pnpm lint           # ESLint on src/
-pnpm dev:cli        # Build and run the CLI locally
+pnpm build          # Compile TypeScript via tsc (runs node build.js in each package)
+pnpm dev            # tsc --watch (all packages)
+pnpm test           # Run all tests once (vitest run) across all packages
+pnpm test:watch     # Run tests in watch mode (vitest) across all packages
+pnpm lint           # ESLint on packages/
+# Per-package commands:
+pnpm -F learn-anything-cli build     # Build only the CLI package
+pnpm -F learn-anything-cli test      # Test only the CLI package
 ```
 
-## Architecture
+## Architecture (monorepo)
 
 ```
-src/
-  cli/index.ts          # Commander.js CLI: `learn-anything init [path]` and `learn-anything update [path]`
-  core/
-    init.ts             # InitCommand — orchestrates tool detection, interactive selection,
-                        #   skill generation, and command generation
-    config.ts           # AI_TOOLS array (30+ tools with skillsDir mappings), LEARN_DIR
-    command-generation/ # Adapter pattern: each tool has an adapter that knows its file format
-                        #   and directory conventions (Claude → .claude/commands/, YAML frontmatter;
-                        #   Gemini → .gemini/commands/, TOML; Codex → ~/.codex/prompts/)
-      types.ts          # CommandContent, ToolCommandAdapter, GeneratedCommand interfaces
-      registry.ts       # CommandAdapterRegistry — maps tool IDs → adapters
-      generator.ts      # generateCommand / generateCommands — applies adapter to content
-      adapters/         # claude.ts, cursor.ts, codex.ts, gemini.ts
-    templates/
-      types.ts          # SkillTemplate, CommandTemplate interfaces
-      skill-templates.ts # Re-exports all 5 workflow template getters
-      workflows/        # learn-topic.ts, learn-explain.ts, learn-practice.ts,
-                        #   learn-review.ts, learn-status.ts
-                        #   Each exports getXxxSkillTemplate(locale) and getXxxCommandTemplate(locale)
-    shared/
-      skill-generation.ts  # Aggregates templates; generateSkillContent() writes YAML frontmatter
-  i18n/
-    index.ts            # getMessages(locale), detectSystemLocale(), resolveLocale()
-    types.ts            # LocaleMessages, SkillsMessages, CLIMessages, InitMessages types
-    locales/
-      en.ts, zh-CN.ts   # Top-level locale messages (CLI strings, init messages)
-      skills/{en,zh-CN}/ # Per-workflow skill/command content (topic.ts, explain.ts, etc.)
-  utils/
-    file-system.ts      # ensureDir, writeFile, fileExists, dirExists, removeDir
-    interactive.ts      # isInteractive() — checks process.stdin/stdout.isTTY
+packages/
+  cli/                  # Published as `learn-anything-cli`
+    src/
+      cli/index.ts          # Commander.js CLI: `learn-anything init [path]` and `learn-anything update [path]`
+      core/
+        init.ts             # InitCommand — orchestrates tool detection, interactive selection,
+                            #   skill generation, and command generation
+        config.ts           # AI_TOOLS array (30+ tools with skillsDir mappings), LEARN_DIR
+        command-generation/ # Adapter pattern: each tool has an adapter that knows its file format
+                            #   and directory conventions (Claude → .claude/commands/, YAML frontmatter;
+                            #   Gemini → .gemini/commands/, TOML; Codex → ~/.codex/prompts/)
+          types.ts          # CommandContent, ToolCommandAdapter, GeneratedCommand interfaces
+          registry.ts       # CommandAdapterRegistry — maps tool IDs → adapters
+          generator.ts      # generateCommand / generateCommands — applies adapter to content
+          adapters/         # claude.ts, cursor.ts, codex.ts, gemini.ts
+        templates/
+          types.ts          # SkillTemplate, CommandTemplate interfaces
+          skill-templates.ts # Re-exports all 5 workflow template getters
+          workflows/        # learn-topic.ts, learn-explain.ts, learn-practice.ts,
+                            #   learn-review.ts, learn-status.ts
+                            #   Each exports getXxxSkillTemplate(locale) and getXxxCommandTemplate(locale)
+        shared/
+          skill-generation.ts  # Aggregates templates; generateSkillContent() writes YAML frontmatter
+      i18n/
+        index.ts            # getMessages(locale), detectSystemLocale(), resolveLocale()
+        types.ts            # LocaleMessages, SkillsMessages, CLIMessages, InitMessages types
+        locales/
+          en.ts, zh-CN.ts   # Top-level locale messages (CLI strings, init messages)
+          skills/{en,zh-CN}/ # Per-workflow skill/command content (topic.ts, explain.ts, etc.)
+      utils/
+        file-system.ts      # ensureDir, writeFile, fileExists, dirExists, removeDir
+        interactive.ts      # isInteractive() — checks process.stdin/stdout.isTTY
+  gui/                  # Placeholder for future GUI (private, not published)
 ```
 
 ### Key Patterns
@@ -63,5 +68,5 @@ src/
 
 ### Adding a new AI tool
 
-1. Add an entry to `AI_TOOLS` in `src/core/config.ts` with the tool's `skillsDir` path.
-2. If the tool has custom command file conventions, create an adapter in `src/core/command-generation/adapters/` and register it in `src/core/command-generation/adapters/index.ts` and `registry.ts`.
+1. Add an entry to `AI_TOOLS` in `packages/cli/src/core/config.ts` with the tool's `skillsDir` path.
+2. If the tool has custom command file conventions, create an adapter in `packages/cli/src/core/command-generation/adapters/` and register it in `packages/cli/src/core/command-generation/adapters/index.ts` and `registry.ts`.

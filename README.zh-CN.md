@@ -1,102 +1,161 @@
-# Learn Anything
+<h1 align="center">Learn Anything</h1>
 
-AI 驱动的递归学习系统 — 将你的 AI 编程助手变成交互式导师，使用苏格拉底式教学法和 TDD 风格练习。
+<p align="center">
+  <strong>AI 驱动的递归学习系统</strong><br />
+  将你的 AI 编程助手变成交互式导师 — 苏格拉底式教学法 · TDD 风格练习
+</p>
 
-为 **30+ 种 AI 工具**（Claude Code、Cursor、Gemini CLI、Codex、Copilot、Windsurf 等）生成 skill 和 command 文件，通过斜杠命令系统性掌握任何技术主题。
+<p align="center">
+  <a href="https://www.npmjs.com/package/learn-anything-cli"><img src="https://img.shields.io/npm/v/learn-anything-cli?color=blue&label=npm" alt="npm 版本" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-%3E%3D20.0-green" alt="Node.js" /></a>
+  <a href="https://pnpm.io/"><img src="https://img.shields.io/badge/pnpm-workspace-orange" alt="pnpm workspace" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="许可证 MIT" /></a>
+</p>
+
+<p align="center">
+  <a href="./README.md">English</a> · <a href="./README.zh-CN.md">中文</a>
+</p>
+
+---
+
+## 什么是 Learn Anything？
+
+**Learn Anything** 为 **30+ 种 AI 编程工具**（Claude Code、Cursor、Codex、OpenCode 等）生成 skill 和 command 文件。安装后，你的 AI 助手获得五个斜杠命令，引导你系统性掌握任何技术主题：
+
+- 🧭 **自主选择路径** — AI 生成知识图谱，你来决定学什么
+- 🎓 **递归学习法** — 递归讲解跟随你的好奇心，想挖多深就多深
+- 🧪 **TDD 风格练习** — 写真实代码，获结构化反馈，从入门到挑战
+- 📊 **间隔重复** — 智能复习，在最佳时机帮你巩固薄弱环节
+- 🔥 **知识可视化** — 热力图直观展示你的掌握状态
 
 ## 快速开始
 
 ```bash
-# 在项目中初始化（交互模式 — 选择你的 AI 工具）
+# 交互模式 — 自动检测你的 AI 工具并提示选择
 npx learn-anything-cli init
 
-# 直接指定工具
+# 指定工具
 npx learn-anything-cli init --tools claude
 
-# 中文终端输出
-npx learn-anything-cli init --lang zh-CN
-
-# 或者全局安装
-npm install -g learn-anything-cli
+# 或全局安装
+pnpm add -g learn-anything-cli   # npm install -g learn-anything-cli
 learn-anything init
 ```
 
-### Context7 集成（可选）
+### Context7 集成 _(可选)_
 
-在执行 `init` 或 `update` 时，会提示是否启用 **Context7** 文档验证。启用后，AI 会获取官方文档并对照权威来源验证其教学内容——提高教学准确性。
+执行 `init` 或 `update` 时会提示是否启用 **Context7** 文档验证。启用后，AI 会获取官方文档并对照权威来源验证其讲解内容——大幅提高教学准确性。
 
-如果你还没有配置 Context7，运行 `npx ctx7 setup` 或访问 [Context7 文档](https://context7.com/docs/resources/all-clients) 查看你使用的 AI 工具的配置方式。
+> **安装：** 运行 `npx ctx7 setup` 或访问 [Context7 文档](https://context7.com/docs/resources/all-clients) 查看你的 AI 工具的配置方式。
 
-初始化后，你的 AI 助手获得五个学习命令：
+### 安装后 — 五个学习命令
 
-| 命令                             | 功能                                   |
-| -------------------------------- | -------------------------------------- |
-| `/learn:topic <topic-name>`      | 初始化主题，生成知识图谱，跟踪学习进度 |
-| `/learn:explain <concept-name>`  | 递归式苏格拉底深度学习一个概念         |
-| `/learn:practice <concept-name>` | TDD 风格编码练习，获得苏格拉底式反馈   |
-| `/learn:review [topic-name]`     | 回顾学习进度，基于间隔重复推荐下一步   |
-| `/learn:status [topic-name]`     | 可视化学习状态，展示知识图谱热力图     |
-
-## 学习工作流
-
-### `/learn:topic <topic-name>` — 初始化主题
-
-AI 创建学习状态文件（`state.json`），并通过 `render.mjs` 生成知识图谱（`knowledge-map.md`），展示知识全景让你自主选择学习路径。
-
-### `/learn:explain <concept-name>` — 递归式深度学习
-
-AI 评估你的水平（初级 → 高级），用类比和代码示例讲解概念，识别更深层的子话题，让你自主决定深入程度。每次学习会话都会被记录用于间隔重复。
-
-### `/learn:practice <concept-name>` — TDD 风格练习
-
-AI 生成合适难度的测试驱动练习题（入门 / 进阶 / 挑战），提供结构化的苏格拉底式反馈，并更新你的掌握状态。涵盖边界情况、安全性和代码质量。
-
-### `/learn:review [topic-name]` — 进度回顾
-
-分析学习数据：掌握度热力图、间隔重复优先级评分、概念关系分析（阻塞概念 / 孤立概念）。生成个性化的下一步学习计划。
-
-### `/learn:status [topic-name]` — 可视化状态
-
-为每个概念渲染带状态图标、练习次数和信心分数的知识图谱热力图。
-
-## 支持的 AI 工具
-
-Manage、Amazon Q Developer、Antigravity、Auggie、Bob Shell、Claude Code、Cline、Codex、ForgeCode、CodeBuddy Code、Continue、CoStrict、Crush、Cursor、Factory Droid、Gemini CLI、GitHub Copilot、iFlow、Junie、Kilo Code、Kiro、OpenCode、Pi、Qoder、Lingma、Qwen Code、RooCode、Trae、Windsurf 及兼容 AGENTS.md 的助手。
-
-```bash
-# 更新技能文件到最新版本（自动检测已有工具目录）
-npx learn-anything-cli update
-```
+| 命令                     | 功能                                      |
+| :----------------------- | :---------------------------------------- |
+| `/learn:topic <名称>`    | 初始化主题，生成知识图谱，跟踪进度        |
+| `/learn:explain <名称>`  | 递归式学习法 — 想挖多深就挖多深           |
+| `/learn:practice <名称>` | TDD 风格编码练习，结构化反馈              |
+| `/learn:review [名称]`   | 间隔重复复习，个性化下一步计划            |
+| `/learn:status [名称]`   | 知识图谱热力图 — 掌握度、练习次数、信心分 |
 
 ## 工作原理
 
 ```
 你的项目/
-├── .claude/commands/learn/    # 斜杠命令（learn:topic、learn:explain...）
-├── .claude/skills/            # 包含完整工作流指令的 skill 文件
-├── .cursor/commands/          # Cursor 专用命令格式
-├── .gemini/commands/learn/    # Gemini TOML 格式命令
-├── .learn/                    # 你的学习数据（知识图谱、进度）
+├── .claude/
+│   ├── commands/learn/          # Claude 专用斜杠命令
+│   └── skills/                  # 包含完整工作流指令的 skill 文件
+├── .cursor/commands/            # Cursor 专用命令格式
+├── .gemini/commands/learn/      # Gemini TOML 格式命令
+├── .codex/prompts/              # Codex prompt 文件
+│   ...                          # （30+ 种工具各有对应格式）
+│
+├── .learn/                      # 🧠 你的学习数据存在这里
 │   └── topics/
-│       └── javascript/
-│           ├── state.json          # 学习数据（唯一数据源）
-│           ├── knowledge-map.md    # 由 render.mjs 从 state.json 自动生成
-│           └── sessions/
+│       └── typescript/
+│           ├── state.json           # 唯一数据源
+│           ├── knowledge-map.md     # 由 state.json 自动渲染
+│           └── sessions/            # 会话历史，用于间隔重复
 └── ...
 ```
 
-每个 AI 工具通过适配器模式获得对应格式的文件（Claude 用 YAML frontmatter，Gemini 用 TOML 等）。
+每个 AI 工具通过**适配器模式**获得对应格式的文件——Claude 用 YAML frontmatter，Gemini 用 TOML，Cursor 用 Markdown 等。
+
+## 仓库结构
+
+```
+learn-anything/
+├── packages/
+│   ├── cli/                     # learn-anything-cli — 发布到 npm
+│   │   ├── src/
+│   │   │   ├── cli/             # Commander.js CLI 入口
+│   │   │   ├── core/            # 初始化、配置、命令生成、模板
+│   │   │   ├── i18n/            # en + zh-CN 多语言
+│   │   │   └── utils/           # 文件系统、交互式帮助函数
+│   │   ├── bin/                 # learn-anything 可执行文件
+│   │   └── package.json
+│   └── gui/                     # learn-anything-gui — 开发中 🚧
+│       └── README.md
+├── pnpm-workspace.yaml          # pnpm workspace 配置
+├── tsconfig.base.json           # 共享 TypeScript 编译选项
+├── package.json                 # 工作区根配置（私有）
+└── pnpm-lock.yaml
+```
+
+| 包                                     | npm                                                                                                                    | 说明                                             |
+| :------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
+| [`learn-anything-cli`](./packages/cli) | [![npm](https://img.shields.io/npm/v/learn-anything-cli?color=blue)](https://www.npmjs.com/package/learn-anything-cli) | CLI 工具 — 为 30+ AI 工具生成 skill/command 文件 |
+| `learn-anything-gui`                   | _私有_                                                                                                                 | 图形化桌面界面 _(开发中)_                        |
+
+## 支持的 AI 工具
+
+> Manage、Amazon Q Developer、Antigravity、Auggie、Bob Shell、Claude Code、Cline、Codex、ForgeCode、CodeBuddy Code、Continue、CoStrict、Crush、Cursor、Factory Droid、Gemini CLI、GitHub Copilot、iFlow、Junie、Kilo Code、Kiro、OpenCode、Pi、Qoder、Lingma、Qwen Code、RooCode、Trae、Windsurf 及兼容 AGENTS.md 的助手。
+
+```bash
+# 更新已有 skill 文件到最新版本（自动检测已安装的工具）
+npx learn-anything-cli update
+```
 
 ## 开发
 
+### 前置条件
+
+- **Node.js** ≥ 20
+- **pnpm** ≥ 9
+
+### 环境搭建
+
 ```bash
+git clone https://github.com/ChenChenyaqi/learn-anything.git
+cd learn-anything
 pnpm install
-pnpm build        # 编译 TypeScript
-pnpm test         # 运行测试
-pnpm dev          # 监听模式
-pnpm dev:cli      # 本地构建并运行 CLI
+```
+
+### 常用命令
+
+| 命令              | 说明                          |
+| :---------------- | :---------------------------- |
+| `pnpm build`      | 构建所有包 (`tsc`)            |
+| `pnpm test`       | 运行所有测试 (`vitest run`)   |
+| `pnpm test:watch` | 监听模式运行测试              |
+| `pnpm dev`        | TypeScript 监听模式（所有包） |
+| `pnpm lint`       | 代码检查 (`eslint`)           |
+| `pnpm format`     | 格式化代码 (`prettier`)       |
+
+### 单独包命令
+
+```bash
+pnpm -F learn-anything-cli build      # 仅构建 CLI
+pnpm -F learn-anything-cli test       # 仅测试 CLI
+pnpm -F learn-anything-cli dev:cli    # 构建并在本地运行 CLI
 ```
 
 ## 许可证
 
-MIT
+[MIT](./LICENSE) © [yaqi chen](https://github.com/ChenChenyaqi)
+
+---
+
+<p align="center">
+  <sub>用 ❤️ 为好奇心构建 · <a href="https://github.com/ChenChenyaqi/learn-anything">GitHub</a> · <a href="./CONTRIBUTING.md">贡献指南</a> · <a href="./CHANGELOG.md">更新日志</a></sub>
+</p>

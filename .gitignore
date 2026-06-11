@@ -9,4 +9,4 @@ dist/
 .learn
 
 # test output
-test/core/learn-protocol/fixtures/migrates/
+packages/cli/test/core/learn-protocol/fixtures/migrates/
