@@ -150,6 +150,16 @@ pnpm -F learn-anything-cli test       # Test only CLI
 pnpm -F learn-anything-cli dev:cli    # Build and run CLI locally
 ```
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=ChenChenyaqi%2Flearn-anything&type=date&legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ChenChenyaqi/learn-anything&type=date&theme=dark&legend=top-left" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ChenChenyaqi/learn-anything&type=date&legend=top-left" />
+    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ChenChenyaqi/learn-anything&type=date&legend=top-left" />
+  </picture>
+</a>
+
 ## License
 
 [MIT](./LICENSE) © [yaqi chen](https://github.com/ChenChenyaqi)
