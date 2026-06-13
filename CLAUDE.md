@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Learn Anything is a CLI tool (`learn-anything`) that generates skill and command files for AI coding assistants, turning them into interactive learning tutors. It supports 30+ AI tools (Claude Code, Cursor, Gemini CLI, Codex, Copilot, Windsurf, etc.) and outputs localized files in `en` and `zh-CN`.
 
-The generated skills implement 5 learning workflows: topic (initialize a subject), explain (recursive Socratic deep-dive), practice (TDD-style exercises), review (spaced repetition), and status (knowledge map visualization).
+The generated skills implement 6 learning workflows: topic (initialize a subject), explain (recursive Socratic deep-dive), practice (TDD-style exercises), review (spaced repetition), status (knowledge map visualization), and quiz (two-stage generation and grading).
 
 ## Commands
 
@@ -41,9 +41,9 @@ packages/
           adapters/         # claude.ts, cursor.ts, codex.ts, gemini.ts
         templates/
           types.ts          # SkillTemplate, CommandTemplate interfaces
-          skill-templates.ts # Re-exports all 5 workflow template getters
+          skill-templates.ts # Re-exports all 6 workflow template getters
           workflows/        # learn-topic.ts, learn-explain.ts, learn-practice.ts,
-                            #   learn-review.ts, learn-status.ts
+                            #   learn-review.ts, learn-status.ts, learn-quiz.ts
                             #   Each exports getXxxSkillTemplate(locale) and getXxxCommandTemplate(locale)
         shared/
           skill-generation.ts  # Aggregates templates; generateSkillContent() writes YAML frontmatter
