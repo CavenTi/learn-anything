@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-06-16
+
+### Added
+
+- **Source location annotations**: Code examples in the explain workflow now include source file and line number references, helping the AI tutor provide precise cross-references during Socratic explanations.
+- **Star History chart**: Added an embeddable Star History chart to all README files for better visual visibility of project growth.
+
 ## [0.5.0] - 2026-06-11
 
 ### Changed
@@ -93,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.4.0...v0.4.1
