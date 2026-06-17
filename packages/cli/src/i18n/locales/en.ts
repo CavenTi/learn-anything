@@ -42,6 +42,9 @@ export const en: LocaleMessages = {
     context7Enabled: '  📚 Context7 guidance enabled.',
     context7SetupHint:
       '  💡 To set up Context7 MCP, run `npx ctx7 setup` or visit https://context7.com/docs/resources/all-clients',
+    sitePrompt:
+      'Generate a local visualization site to view learning progress? (serve with `learn-anything serve`)',
+    siteEnabled: '  🌐 Site generation enabled. Run `learn-anything serve` to view.',
   },
 
   serve: {

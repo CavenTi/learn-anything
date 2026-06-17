@@ -48,6 +48,8 @@ export interface InitMessages {
   context7Prompt: string;
   context7Enabled: string;
   context7SetupHint: string;
+  sitePrompt: string;
+  siteEnabled: string;
 }
 
 export interface LocaleMessages {

@@ -37,6 +37,8 @@ export const zhCN: LocaleMessages = {
     context7Enabled: '  📚 已启用 Context7 文档验证引导。',
     context7SetupHint:
       '  💡 配置 Context7 MCP：运行 `npx ctx7 setup` 或访问 https://context7.com/docs/resources/all-clients',
+    sitePrompt: '是否生成本地可视化站点以查看学习进度？（使用 `learn-anything serve` 启动）',
+    siteEnabled: '  🌐 已启用站点生成。运行 `learn-anything serve` 查看。',
   },
 
   serve: {
