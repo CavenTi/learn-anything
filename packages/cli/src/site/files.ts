@@ -44,6 +44,7 @@ declare module '*.md' {
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:test": "vite --mode test",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -901,9 +902,7 @@ export function useI18n() {
   };
 
   const isDark = ref<boolean>(
-    typeof document !== 'undefined'
-      ? document.documentElement.classList.contains('dark')
-      : false,
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false,
   );
 
   const toggleDarkMode = (): void => {
@@ -1002,12 +1001,13 @@ export interface SelectedFilePayload {
 
 // Eager: state.json & knowledge-map (small, always needed)
 // Production reads from site/topics, tests read from test/fixtures/topics
-const testStateGlob = import.meta.env.MODE === 'test'
-  ? import.meta.glob('../../../test/fixtures/topics/*/state.json', {
-      eager: true,
-      import: 'default',
-    })
-  : {};
+const testStateGlob =
+  import.meta.env.MODE === 'test'
+    ? import.meta.glob('../../../test/fixtures/topics/*/state.json', {
+        eager: true,
+        import: 'default',
+      })
+    : {};
 
 const stateModules = {
   ...import.meta.glob('../../topics/*/state.json', {
@@ -1017,13 +1017,14 @@ const stateModules = {
   ...testStateGlob,
 } as Record<string, StateV1>;
 
-const testKmGlob = import.meta.env.MODE === 'test'
-  ? import.meta.glob('../../../test/fixtures/topics/*/knowledge-map.md', {
-      eager: true,
-      query: '?raw',
-      import: 'default',
-    })
-  : {};
+const testKmGlob =
+  import.meta.env.MODE === 'test'
+    ? import.meta.glob('../../../test/fixtures/topics/*/knowledge-map.md', {
+        eager: true,
+        query: '?raw',
+        import: 'default',
+      })
+    : {};
 
 const knowledgeMapModules = {
   ...import.meta.glob('../../topics/*/knowledge-map.md', {
@@ -1035,11 +1036,12 @@ const knowledgeMapModules = {
 } as Record<string, string>;
 
 // Lazy: session & exercise content loaded on demand via dynamic import()
-const testSessionGlob = import.meta.env.MODE === 'test'
-  ? import.meta.glob('../../../test/fixtures/topics/*/sessions/*/*.md', {
-      query: '?raw',
-    })
-  : {};
+const testSessionGlob =
+  import.meta.env.MODE === 'test'
+    ? import.meta.glob('../../../test/fixtures/topics/*/sessions/*/*.md', {
+        query: '?raw',
+      })
+    : {};
 
 const sessionContentLoaders = {
   ...import.meta.glob('../../topics/*/sessions/*/*.md', {
@@ -1048,11 +1050,12 @@ const sessionContentLoaders = {
   ...testSessionGlob,
 } as Record<string, () => Promise<{ default: string }>>;
 
-const testExerciseGlob = import.meta.env.MODE === 'test'
-  ? import.meta.glob('../../../test/fixtures/topics/*/exercises/**/*', {
-      query: '?raw',
-    })
-  : {};
+const testExerciseGlob =
+  import.meta.env.MODE === 'test'
+    ? import.meta.glob('../../../test/fixtures/topics/*/exercises/**/*', {
+        query: '?raw',
+      })
+    : {};
 
 const exerciseContentLoaders = {
   ...import.meta.glob('../../topics/*/exercises/**/*', {
@@ -1934,11 +1937,7 @@ export function isMarkdownFile(path: string): boolean {
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": [
-    "env.d.ts",
-    "src/**/*.ts",
-    "src/**/*.vue"
-  ],
+  "include": ["env.d.ts", "src/**/*.ts", "src/**/*.vue"],
   "exclude": ["node_modules", "dist"]
 }
 `,
@@ -1950,17 +1949,40 @@ import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig({
-  plugins: [vue(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@data': resolve(__dirname, 'topics'),
+export default defineConfig(({ mode }) => {
+  const topicsDir =
+    mode === 'test' ? resolve(__dirname, '../test/fixtures/topics') : resolve(__dirname, 'topics');
+
+  return {
+    plugins: [
+      vue(),
+      tailwindcss(),
+      {
+        name: 'topics-full-reload',
+        apply: 'serve',
+        configureServer(server) {
+          server.watcher.add(topicsDir);
+          const onAddUnlink = (file: string) => {
+            const normalized = file.replace(/\\\\/g, '/');
+            if (normalized.startsWith(topicsDir)) {
+              server.ws.send({ type: 'full-reload' });
+            }
+          };
+          server.watcher.on('add', onAddUnlink);
+          server.watcher.on('unlink', onAddUnlink);
+        },
+      },
+    ],
+    resolve: {
+      alias: {
+        '@data': resolve(__dirname, 'topics'),
+      },
     },
-  },
-  server: {
-    host: true,
-    port: 5173,
-  },
+    server: {
+      host: true,
+      port: 5173,
+    },
+  };
 });
 `,
 };

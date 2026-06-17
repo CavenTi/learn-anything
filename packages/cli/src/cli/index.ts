@@ -29,12 +29,19 @@ program
   .option('--tools <tools>', m.cli.toolsOptionDescription(availableToolIds.join(', ')))
   .option('--force', m.cli.forceOption)
   .option('--lang <locale>', m.cli.langOption)
+  .option('--site', m.cli.siteOption)
   .option('--context7', 'Enable Context7 documentation verification')
   .option('--no-context7', 'Disable Context7 documentation verification')
   .action(
     async (
       targetPath = '.',
-      options?: { tools?: string; force?: boolean; lang?: string; context7?: boolean },
+      options?: {
+        tools?: string;
+        force?: boolean;
+        lang?: string;
+        site?: boolean;
+        context7?: boolean;
+      },
     ) => {
       const cliLocale = resolveLocale(options?.lang);
       const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
@@ -64,6 +71,17 @@ program
           context7: options?.context7,
         });
         await initCommand.execute(targetPath);
+
+        if (options?.site) {
+          const { SiteGenerator } = await import('../core/site-generator.js');
+          const generator = new SiteGenerator({
+            targetPath: resolvedPath,
+            force: options?.force,
+          });
+          await generator.generate();
+          const svc = cliLocale !== earlyLocale ? getMessages(cliLocale).serve : m.serve;
+          console.log(chalk.green(svc.siteGenerated));
+        }
       } catch (error) {
         console.log();
         console.error(chalk.red(mc.errorPrefix((error as Error).message)));
@@ -77,23 +95,70 @@ program
   .description(m.cli.updateCommandDescription)
   .option('--force', m.cli.forceOption)
   .option('--lang <locale>', m.cli.langOption)
-  .action(async (targetPath = '.', options?: { force?: boolean; lang?: string }) => {
-    const cliLocale = resolveLocale(options?.lang);
-    const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
-    try {
-      const { InitCommand } = await import('../core/init.js');
-      const initCommand = new InitCommand({
-        update: true,
-        force: options?.force ?? true,
-        locale: cliLocale,
-      });
-      await initCommand.execute(targetPath);
-      console.log(chalk.green(mc.updateComplete));
-    } catch (error) {
-      console.log();
-      console.error(chalk.red(mc.errorPrefix((error as Error).message)));
-      process.exit(1);
-    }
-  });
+  .option('--site', m.cli.siteOption)
+  .action(
+    async (targetPath = '.', options?: { force?: boolean; lang?: string; site?: boolean }) => {
+      const cliLocale = resolveLocale(options?.lang);
+      const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
+      try {
+        const resolvedPath = path.resolve(targetPath);
+
+        const { InitCommand } = await import('../core/init.js');
+        const initCommand = new InitCommand({
+          update: true,
+          force: options?.force ?? true,
+          locale: cliLocale,
+        });
+        await initCommand.execute(targetPath);
+        console.log(chalk.green(mc.updateComplete));
+
+        if (options?.site) {
+          const { SiteGenerator } = await import('../core/site-generator.js');
+          const generator = new SiteGenerator({
+            targetPath: resolvedPath,
+            force: options?.force,
+          });
+          await generator.generate();
+          const svc = cliLocale !== earlyLocale ? getMessages(cliLocale).serve : m.serve;
+          console.log(chalk.green(svc.siteGenerated));
+        }
+      } catch (error) {
+        console.log();
+        console.error(chalk.red(mc.errorPrefix((error as Error).message)));
+        process.exit(1);
+      }
+    },
+  );
+
+program
+  .command('serve [path]')
+  .description(m.cli.serveCommandDescription)
+  .option('--port <number>', m.cli.portOption, parseInt)
+  .option('--no-open', m.cli.noOpenOption)
+  .option('--force', m.cli.forceOption)
+  .option('--lang <locale>', m.cli.langOption)
+  .action(
+    async (
+      targetPath = '.',
+      options?: { port?: number; open?: boolean; force?: boolean; lang?: string },
+    ) => {
+      const cliLocale = resolveLocale(options?.lang);
+      const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
+      try {
+        const { executeServe } = await import('../core/serve.js');
+        await executeServe({
+          targetPath,
+          port: options?.port,
+          open: options?.open,
+          force: options?.force,
+          locale: cliLocale,
+        });
+      } catch (error) {
+        console.log();
+        console.error(chalk.red(mc.errorPrefix((error as Error).message)));
+        process.exit(1);
+      }
+    },
+  );
 
 program.parse();

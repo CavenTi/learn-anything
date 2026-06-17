@@ -16,6 +16,10 @@ export const en: LocaleMessages = {
     updateComplete: 'Learn Anything skill files have been updated.',
     forceOption: 'Skip confirmation prompt',
     langOption: 'Display language: zh-CN or en (default: system locale)',
+    siteOption: 'Generate site visualization files for learning progress',
+    portOption: 'Port for the dev server (default: 5173)',
+    noOpenOption: 'Do not open browser automatically',
+    serveCommandDescription: 'Start a local site to visualize learning progress',
   },
 
   init: {
@@ -38,5 +42,22 @@ export const en: LocaleMessages = {
     context7Enabled: '  📚 Context7 guidance enabled.',
     context7SetupHint:
       '  💡 To set up Context7 MCP, run `npx ctx7 setup` or visit https://context7.com/docs/resources/all-clients',
+  },
+
+  serve: {
+    commandDescription: 'Start a local site to visualize learning progress',
+    generatingSiteFiles: 'Generating site files...',
+    installingDependencies: 'Installing dependencies...',
+    startingDevServer: 'Starting dev server...',
+    siteReady: (url: string) => `Site ready at ${url}`,
+    npmNotFound:
+      'npm is not installed. Please install Node.js (which includes npm) to use the serve command.',
+    installFailed: (detail: string) => `Dependency installation failed: ${detail}`,
+    portInUse: (port: number) =>
+      `Port ${port} is already in use. Try a different port with --port option.`,
+    noLearnDir: 'No .learn/ directory found. Run learn-anything init --site first.',
+    emptyTopics: 'No learning topics found in .learn/topics/. Start learning with /learn:topic.',
+    serverStopped: 'Server stopped.',
+    siteGenerated: 'Site files generated successfully.',
   },
 };

@@ -31,4 +31,4 @@ export function resolveLocale(cliFlag?: string): SupportedLocale {
   return detectSystemLocale();
 }
 
-export type { SupportedLocale, LocaleMessages } from './types.js';
+export type { SupportedLocale, LocaleMessages, ServeMessages } from './types.js';

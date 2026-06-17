@@ -81,23 +81,23 @@
 
 > **Status: Pending.** This was designed for VitePress but the concept is the same for Vue 3 + Vite — write embedded template files to `.learn/`.
 
-- [ ] 10.1 Create `packages/cli/src/core/site-generator.ts` — `SiteGenerator` class that imports `SITE_FILES` from `../site/files.ts`, iterates entries, writes each to `.learn/<path>`. Implements overwrite rules: component/composable/style files skipped if exist (unless `force`), config files always written. Creates parent directories as needed
-- [ ] 10.2 Implement `.gitignore` generation — always writes `.learn/.gitignore` with `node_modules/`, `dist/`
-- [ ] 10.3 Export `SiteGenerator` from `packages/cli/src/index.ts` (public API)
-- [ ] 10.4 Unit test `SiteGenerator` — verify correct file writing, overwrite rules, .gitignore content, force mode
+- [x] 10.1 Create `packages/cli/src/core/site-generator.ts` — `SiteGenerator` class that imports `SITE_FILES` from `../site/files.ts`, iterates entries, writes each to `.learn/<path>`. Implements overwrite rules: component/composable/style files skipped if exist (unless `force`), config files always written. Creates parent directories as needed
+- [x] 10.2 Implement `.gitignore` generation — always writes `.learn/.gitignore` with `node_modules/`, `dist/`
+- [x] 10.3 Export `SiteGenerator` from `packages/cli/src/index.ts` (public API)
+- [x] 10.4 Unit test `SiteGenerator` — verify correct file writing, overwrite rules, .gitignore content, force mode
 
 ## 11. CLI integration — serve command
 
-> **Status: Pending.** Same concept as original but spawning `vite dev` instead of `vitepress dev`.
+> **Status: Complete.** serve command, --site flag, --force propagation, i18n messages, edge case handling, and integration tests all done.
 
-- [ ] 11.1 Add `serve [path]` command to `packages/cli/src/cli/index.ts` using Commander. Options: `--port <number>`, `--no-open`, `--force`
-- [ ] 11.2 Implement serve flow: resolve path → ensure `.learn/` and `.learn/topics/` exist → call `SiteGenerator.generate()` → run `npm install --prefix .learn` (with spinner/feedback) → spawn `npx --prefix .learn vite .learn` with optional `--port` and `--open` flags → forward SIGINT/SIGTERM to child process
-- [ ] 11.3 Add `--site` flag to `init [path]` command — after existing skill/command generation completes, call `SiteGenerator.generate()` without npm install or serve
-- [ ] 11.4 Add `--site` flag to `update [path]` command — after existing update logic completes, call `SiteGenerator.generate()` (which will overwrite config but preserve theme)
-- [ ] 11.5 Add `--force` flag propagation: `init --site --force` and `serve --force` pass `force: true` to `SiteGenerator` to overwrite theme files
-- [ ] 11.6 Add localized CLI messages for serve-related output in `packages/cli/src/i18n/locales/en.ts` and `zh-CN.ts`: "generating site files...", "installing dependencies...", "starting dev server...", "site ready at {url}"
-- [ ] 11.7 Handle edge cases: npm not installed, dependency install failure, port already in use, missing `.learn/` directory, empty topics directory
-- [ ] 11.8 Integration test for `serve` command — verify it generates files, runs npm install, attempts to start vite
-- [ ] 11.9 Integration test for `init --site` — verify site files are generated alongside skill/command files
-- [ ] 11.10 Integration test for `update --site` — verify config files are overwritten but theme files are preserved
-- [ ] 11.11 Verify existing tests still pass — `init` without `--site` should behave identically to before
+- [x] 11.1 Add `serve [path]` command to `packages/cli/src/cli/index.ts` using Commander. Options: `--port <number>`, `--no-open`, `--force`
+- [x] 11.2 Implement serve flow: resolve path → ensure `.learn/` and `.learn/topics/` exist → call `SiteGenerator.generate()` → run `npm install --prefix .learn` (with spinner/feedback) → spawn `npx --prefix .learn vite .learn` with optional `--port` and `--open` flags → forward SIGINT/SIGTERM to child process
+- [x] 11.3 Add `--site` flag to `init [path]` command — after existing skill/command generation completes, call `SiteGenerator.generate()` without npm install or serve
+- [x] 11.4 Add `--site` flag to `update [path]` command — after existing update logic completes, call `SiteGenerator.generate()` (which will overwrite config but preserve theme)
+- [x] 11.5 Add `--force` flag propagation: `init --site --force` and `serve --force` pass `force: true` to `SiteGenerator` to overwrite theme files
+- [x] 11.6 Add localized CLI messages for serve-related output in `packages/cli/src/i18n/locales/en.ts` and `zh-CN.ts`: "generating site files...", "installing dependencies...", "starting dev server...", "site ready at {url}"
+- [x] 11.7 Handle edge cases: npm not installed, dependency install failure, port already in use, missing `.learn/` directory, empty topics directory
+- [x] 11.8 Integration test for `serve` command — verify it generates files, runs npm install, attempts to start vite
+- [x] 11.9 Integration test for `init --site` — verify site files are generated alongside skill/command files
+- [x] 11.10 Integration test for `update --site` — verify config files are overwritten but theme files are preserved
+- [x] 11.11 Verify existing tests still pass — `init` without `--site` should behave identically to before
