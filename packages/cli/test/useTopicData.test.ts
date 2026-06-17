@@ -5,6 +5,8 @@ import {
   loadKnowledgeMap,
   scanSessions,
   scanExercises,
+  scanRootSessions,
+  scanRootExercises,
   loadSessionContent,
   loadExerciseContent,
 } from '../site/src/composables/useTopicData';
@@ -18,8 +20,10 @@ import type { SessionFile, ExerciseGroup } from '../site/src/composables/useTopi
 /*    - sessions/language-basics/2026-06-13.md                          */
 /*    - sessions/language-basics/2026-06-14.md                          */
 /*    - sessions/functions-scope/2026-06-14.md                           */
+/*    - sessions/overview.md (orphan, no domain dir)                     */
 /*    - exercises/variables-data-types/{README,starter,solution}.{md,js} */
 /*    - exercises/variables-data-types/practice-2026-06-14.json          */
+/*    - exercises/warmup.js (orphan, no concept dir)                     */
 /* ==================================================================== */
 
 const VALID_SLUG = 'javascript';
@@ -350,6 +354,118 @@ describe('scanExercises', () => {
 });
 
 /* ------------------------------------------------------------------ */
+/*  scanRootSessions                                                   */
+/* ------------------------------------------------------------------ */
+
+describe('scanRootSessions', () => {
+  const slug = VALID_SLUG;
+
+  it('returns orphan session files directly under sessions/', () => {
+    const files = scanRootSessions(slug);
+    expect(files.length).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(files)).toBe(true);
+  });
+
+  it('returns SessionFile objects with filename and path', () => {
+    const files = scanRootSessions(slug);
+    for (const f of files) {
+      expect(f).toHaveProperty('filename');
+      expect(f).toHaveProperty('path');
+      expect(typeof f.filename).toBe('string');
+      expect(typeof f.path).toBe('string');
+    }
+  });
+
+  it('filenames are just the file name, not full paths', () => {
+    const files = scanRootSessions(slug);
+    for (const f of files) {
+      expect(f.filename).not.toContain('/');
+    }
+  });
+
+  it('includes the overview.md file', () => {
+    const files = scanRootSessions(slug);
+    const names = files.map((f) => f.filename);
+    expect(names).toContain('overview.md');
+  });
+
+  it('paths contain the correct topic and sessions directory', () => {
+    const files = scanRootSessions(slug);
+    for (const f of files) {
+      expect(f.path).toContain(`/topics/${slug}/sessions/`);
+    }
+  });
+
+  it('returns empty array for non-existent topic', () => {
+    const files = scanRootSessions(NONEXISTENT_SLUG);
+    expect(files).toHaveLength(0);
+    expect(Array.isArray(files)).toBe(true);
+  });
+
+  it('returns empty array for empty slug', () => {
+    const files = scanRootSessions('');
+    expect(files).toHaveLength(0);
+    expect(Array.isArray(files)).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/*  scanRootExercises                                                  */
+/* ------------------------------------------------------------------ */
+
+describe('scanRootExercises', () => {
+  const slug = VALID_SLUG;
+
+  it('returns orphan exercise files directly under exercises/', () => {
+    const files = scanRootExercises(slug);
+    expect(files.length).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(files)).toBe(true);
+  });
+
+  it('returns ExerciseFile objects with name and path', () => {
+    const files = scanRootExercises(slug);
+    for (const f of files) {
+      expect(f).toHaveProperty('name');
+      expect(f).toHaveProperty('path');
+      expect(typeof f.name).toBe('string');
+      expect(typeof f.path).toBe('string');
+    }
+  });
+
+  it('exercise file names include expected orphan files', () => {
+    const files = scanRootExercises(slug);
+    const names = files.map((f) => f.name);
+    expect(names).toContain('warmup.js');
+  });
+
+  it('file names are just the file name, not full paths', () => {
+    const files = scanRootExercises(slug);
+    for (const f of files) {
+      expect(f.name).not.toContain('/');
+    }
+  });
+
+  it('paths contain the correct topic and exercises directory', () => {
+    const files = scanRootExercises(slug);
+    for (const f of files) {
+      expect(f.path).toContain(`/topics/${slug}/exercises/`);
+    }
+  });
+
+  it('returns empty array for non-existent topic', () => {
+    const files = scanRootExercises(NONEXISTENT_SLUG);
+    expect(files).toHaveLength(0);
+    expect(Array.isArray(files)).toBe(true);
+  });
+
+  it('returns empty array for empty slug', () => {
+    const files = scanRootExercises('');
+    expect(files).toHaveLength(0);
+    expect(Array.isArray(files)).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
 /*  loadSessionContent                                                */
 /* ------------------------------------------------------------------ */
 
@@ -376,6 +492,14 @@ describe('loadSessionContent', () => {
       expect(content).not.toBeNull();
       expect(content!.length).toBeGreaterThan(0);
     }
+  });
+
+  it('loads content for orphan session file under sessions/', async () => {
+    const files = scanRootSessions(VALID_SLUG);
+    expect(files.length).toBeGreaterThan(0);
+    const content = await loadSessionContent(files[0].path);
+    expect(content).not.toBeNull();
+    expect(content).toContain('JavaScript Overview');
   });
 });
 
@@ -423,6 +547,15 @@ describe('loadExerciseContent', () => {
     const content = await loadExerciseContent(jsonFile.path);
     expect(content).not.toBeNull();
     expect(typeof content).toBe('string');
+  });
+
+  it('loads orphan exercise file under exercises/', async () => {
+    const files = scanRootExercises(VALID_SLUG);
+    expect(files.length).toBeGreaterThan(0);
+    const content = await loadExerciseContent(files[0].path);
+    expect(content).not.toBeNull();
+    expect(typeof content).toBe('string');
+    expect(content).toContain('typeCheck');
   });
 });
 
@@ -481,5 +614,46 @@ describe('integration: data consistency', () => {
     const content = await loadSessionContent(newest.path);
     expect(content).not.toBeNull();
     expect(content).toContain('Language Basics');
+  });
+
+  it('scanRootSessions + loadSessionContent round-trip', async () => {
+    const files = scanRootSessions(VALID_SLUG);
+    for (const f of files) {
+      const content = await loadSessionContent(f.path);
+      expect(content).not.toBeNull();
+      expect(content!.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('scanRootExercises + loadExerciseContent round-trip', async () => {
+    const files = scanRootExercises(VALID_SLUG);
+    for (const f of files) {
+      const content = await loadExerciseContent(f.path);
+      expect(content).not.toBeNull();
+      expect(typeof content).toBe('string');
+    }
+  });
+
+  it('root session files do not appear in domain sessions', () => {
+    const rootFiles = scanRootSessions(VALID_SLUG);
+    const rootPaths = new Set(rootFiles.map((f) => f.path));
+    const state = loadTopic(VALID_SLUG)!;
+    for (const domain of state.domains) {
+      const sessions = scanSessions(VALID_SLUG, domain.slug);
+      for (const s of sessions) {
+        expect(rootPaths.has(s.path)).toBe(false);
+      }
+    }
+  });
+
+  it('root exercise files do not appear in concept exercise groups', () => {
+    const rootFiles = scanRootExercises(VALID_SLUG);
+    const rootPaths = new Set(rootFiles.map((f) => f.path));
+    const groups = scanExercises(VALID_SLUG);
+    for (const group of groups) {
+      for (const f of group.files) {
+        expect(rootPaths.has(f.path)).toBe(false);
+      }
+    }
   });
 });

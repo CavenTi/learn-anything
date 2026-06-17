@@ -119,13 +119,21 @@ const knowledgeMapModules = {
 // Lazy: session & exercise content loaded on demand via dynamic import()
 const testSessionGlob =
   import.meta.env.MODE === 'test'
-    ? import.meta.glob('../../../test/fixtures/topics/*/sessions/*/*.md', {
-        query: '?raw',
-      })
+    ? {
+        ...import.meta.glob('../../../test/fixtures/topics/*/sessions/*/*.md', {
+          query: '?raw',
+        }),
+        ...import.meta.glob('../../../test/fixtures/topics/*/sessions/*.md', {
+          query: '?raw',
+        }),
+      }
     : {};
 
 const sessionContentLoaders = {
   ...import.meta.glob('../../topics/*/sessions/*/*.md', {
+    query: '?raw',
+  }),
+  ...import.meta.glob('../../topics/*/sessions/*.md', {
     query: '?raw',
   }),
   ...testSessionGlob,
@@ -167,6 +175,8 @@ const stateBySlug = new Map<string, StateV1>();
 const knowledgeMapBySlug = new Map<string, string>();
 const sessionsBySlug = new Map<string, Map<string, SessionFile[]>>();
 const exerciseGroupsBySlug = new Map<string, ExerciseGroup[]>();
+const orphanSessionsBySlug = new Map<string, SessionFile[]>();
+const orphanExercisesBySlug = new Map<string, ExerciseFile[]>();
 
 let topicSummaryCache: TopicSummary[] | null = null;
 
@@ -186,21 +196,35 @@ let topicSummaryCache: TopicSummary[] | null = null;
   /* --- Sessions: pre-grouped slug → domain → files (paths only, content lazy) --- */
   for (const path of Object.keys(sessionContentLoaders)) {
     if (!path.endsWith('.md')) continue;
-    const match = path.match(/\/topics\/([^/]+)\/sessions\/([^/]+)\//);
-    if (!match) continue;
-    const [, slug, domain] = match;
-    if (!sessionsBySlug.has(slug)) sessionsBySlug.set(slug, new Map());
-    const domainMap = sessionsBySlug.get(slug)!;
-    if (!domainMap.has(domain)) domainMap.set(domain, []);
-    domainMap.get(domain)!.push({
-      filename: filenameFromPath(path),
-      path,
-    });
+    const domainMatch = path.match(/\/topics\/([^/]+)\/sessions\/([^/]+)\//);
+    if (domainMatch) {
+      const [, slug, domain] = domainMatch;
+      if (!sessionsBySlug.has(slug)) sessionsBySlug.set(slug, new Map());
+      const domainMap = sessionsBySlug.get(slug)!;
+      if (!domainMap.has(domain)) domainMap.set(domain, []);
+      domainMap.get(domain)!.push({
+        filename: filenameFromPath(path),
+        path,
+      });
+      continue;
+    }
+    const rootMatch = path.match(/\/topics\/([^/]+)\/sessions\/([^/]+\.md)$/);
+    if (rootMatch) {
+      const [, slug] = rootMatch;
+      if (!orphanSessionsBySlug.has(slug)) orphanSessionsBySlug.set(slug, []);
+      orphanSessionsBySlug.get(slug)!.push({
+        filename: filenameFromPath(path),
+        path,
+      });
+    }
   }
   for (const domainMap of sessionsBySlug.values()) {
     for (const files of domainMap.values()) {
       files.sort((a, b) => b.filename.localeCompare(a.filename));
     }
+  }
+  for (const files of orphanSessionsBySlug.values()) {
+    files.sort((a, b) => b.filename.localeCompare(a.filename));
   }
 
   /* --- Exercises: pre-grouped slug → concept (paths only, content lazy) --- */
@@ -217,13 +241,21 @@ let topicSummaryCache: TopicSummary[] | null = null;
 
   const raw: Record<string, Map<string, ExerciseFile[]>> = {};
   for (const path of Object.keys(exerciseContentLoaders)) {
-    const match = path.match(/\/topics\/([^/]+)\/exercises\/([^/]+)\//);
-    if (!match) continue;
-    const [, slug, concept] = match;
-    if (!raw[slug]) raw[slug] = new Map();
-    const conceptMap = raw[slug];
-    if (!conceptMap.has(concept)) conceptMap.set(concept, []);
-    conceptMap.get(concept)!.push({ name: filenameFromPath(path), path });
+    const conceptMatch = path.match(/\/topics\/([^/]+)\/exercises\/([^/]+)\//);
+    if (conceptMatch) {
+      const [, slug, concept] = conceptMatch;
+      if (!raw[slug]) raw[slug] = new Map();
+      const conceptMap = raw[slug];
+      if (!conceptMap.has(concept)) conceptMap.set(concept, []);
+      conceptMap.get(concept)!.push({ name: filenameFromPath(path), path });
+      continue;
+    }
+    const rootMatch = path.match(/\/topics\/([^/]+)\/exercises\/([^/]+)$/);
+    if (rootMatch) {
+      const [, slug] = rootMatch;
+      if (!orphanExercisesBySlug.has(slug)) orphanExercisesBySlug.set(slug, []);
+      orphanExercisesBySlug.get(slug)!.push({ name: filenameFromPath(path), path });
+    }
   }
 
   for (const [slug, conceptMap] of Object.entries(raw)) {
@@ -283,6 +315,14 @@ export function scanSessions(slug: string, domain: string): SessionFile[] {
 
 export function scanExercises(slug: string): ExerciseGroup[] {
   return exerciseGroupsBySlug.get(slug) ?? [];
+}
+
+export function scanRootSessions(slug: string): SessionFile[] {
+  return orphanSessionsBySlug.get(slug) ?? [];
+}
+
+export function scanRootExercises(slug: string): ExerciseFile[] {
+  return orphanExercisesBySlug.get(slug) ?? [];
 }
 
 export async function loadSessionContent(path: string): Promise<string | null> {

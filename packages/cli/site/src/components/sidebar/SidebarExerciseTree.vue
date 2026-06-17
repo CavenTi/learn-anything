@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from '../../composables/useI18n';
 import {
   scanExercises,
+  scanRootExercises,
   loadExerciseContent,
 } from '../../composables/useTopicData';
 import type { ExerciseGroup, ExerciseFile } from '../../composables/useTopicData';
@@ -21,6 +22,8 @@ const { t } = useI18n();
 const expandedConcepts = ref<Set<string>>(new Set());
 
 const exerciseGroups = computed<ExerciseGroup[]>(() => scanExercises(props.topicSlug));
+
+const rootExercises = computed<ExerciseFile[]>(() => scanRootExercises(props.topicSlug));
 
 watch(
   () => props.topicSlug,
@@ -78,7 +81,18 @@ async function selectExerciseFile(file: ExerciseFile) {
       </div>
     </div>
 
-    <div v-else class="py-2 text-xs text-text-3">
+    <div v-if="rootExercises.length > 0" class="pt-2 mb-1 space-y-px">
+      <button
+        v-for="file in rootExercises"
+        :key="file.path"
+        class="block w-full text-left py-1 text-xs text-text-2 hover:text-text-1 transition-colors cursor-pointer truncate font-mono"
+        @click="selectExerciseFile(file)"
+      >
+        {{ file.name }}
+      </button>
+    </div>
+
+    <div v-if="exerciseGroups.length === 0 && rootExercises.length === 0" class="py-2 text-xs text-text-3">
       {{ t('sidebar.noExercises') }}
     </div>
   </nav>

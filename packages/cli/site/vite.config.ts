@@ -38,6 +38,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       port: 5173,
+      fs: {
+        allow: [resolve(__dirname, '../..'), resolve(__dirname, '../topics')],
+      },
     },
   };
 });

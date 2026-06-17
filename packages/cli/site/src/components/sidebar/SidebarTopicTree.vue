@@ -4,6 +4,7 @@ import { useI18n } from '../../composables/useI18n';
 import {
   loadTopic,
   scanSessions,
+  scanRootSessions,
   loadSessionContent,
 } from '../../composables/useTopicData';
 import type { Domain, SessionFile } from '../../composables/useTopicData';
@@ -35,6 +36,8 @@ const domainSessions = computed<DomainWithSessions[]>(() => {
     sessions: scanSessions(props.topicSlug, domain.slug),
   }));
 });
+
+const rootSessions = computed<SessionFile[]>(() => scanRootSessions(props.topicSlug));
 
 watch(
   () => props.topicSlug,
@@ -104,7 +107,18 @@ async function selectSessionFile(file: SessionFile) {
       </div>
     </div>
 
-    <div v-else class="py-2 text-xs text-text-3">
+    <div v-if="rootSessions.length > 0" class="pt-2 mb-1 space-y-px">
+      <button
+        v-for="file in rootSessions"
+        :key="file.path"
+        class="block w-full text-left py-1 text-xs text-text-2 hover:text-text-1 transition-colors cursor-pointer truncate font-medium"
+        @click="selectSessionFile(file)"
+      >
+        {{ file.filename }}
+      </button>
+    </div>
+
+    <div v-if="domainSessions.length === 0 && rootSessions.length === 0" class="py-2 text-xs text-text-3">
       {{ t('sidebar.noNotes') }}
     </div>
   </nav>
