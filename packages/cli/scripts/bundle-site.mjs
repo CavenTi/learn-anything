@@ -8,8 +8,7 @@
  *
  * Usage: node scripts/bundle-site.mjs
  *
- * Excludes: node_modules/, topics/, .vitepress/cache/, .vitepress/dist/,
- *           package-lock.json
+ * Excludes: node_modules/, topics/, dist/, package-lock.json
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs';
@@ -30,7 +29,7 @@ const packageDir = join(__dirname, '..');
 
 const EXCLUDED = new Set(['node_modules', 'topics', 'package-lock.json', 'pnpm-lock.yaml']);
 
-const EXCLUDED_PREFIXES = ['.vitepress/cache', '.vitepress/dist'];
+const EXCLUDED_PREFIXES = ['dist'];
 
 /**
  * Returns true if the relative path should be excluded from bundling.

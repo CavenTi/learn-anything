@@ -5,21 +5,12 @@
     "moduleResolution": "bundler",
     "jsx": "preserve",
     "rootDir": ".",
-    "outDir": "./.vitepress/dist",
-    "types": ["vitepress/client"],
     "paths": {
       "@data/*": ["./topics/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": [
-    "env.d.ts",
-    ".vitepress/**/*.ts",
-    ".vitepress/**/*.mts",
-    ".vitepress/**/*.vue",
-    "pages/**/*.md",
-    "pages/**/*.js"
-  ],
-  "exclude": ["node_modules", ".vitepress/dist", ".vitepress/cache"]
+  "include": ["env.d.ts", "src/**/*.ts", "src/**/*.vue"],
+  "exclude": ["node_modules", "dist"]
 }

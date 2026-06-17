@@ -1,12 +1,14 @@
 ## ADDED Requirements
 
+> **Note:** Updated to reflect actual implementation — exclusions include `dist/` and `pnpm-lock.yaml` instead of `.vitepress/cache/` and `.vitepress/dist/`.
+
 ### Requirement: Build script scans site directory and generates files.ts
 
 The system SHALL provide a build script that scans `packages/cli/site/`, reads all template files, and generates `packages/cli/src/site/files.ts` exporting a `SITE_FILES` constant as `Record<string, string>`.
 
 #### Scenario: Build script generates files.ts from site directory
 
-- **WHEN** the build script runs with `packages/cli/site/` containing template files
+- **WHEN** the build script runs with `packages/cli/site/` containing template files (Vue components, composables, styles, config files, etc.)
 - **THEN** the script generates `packages/cli/src/site/files.ts` with a `SITE_FILES` export where each key is a relative file path and each value is the file's string content
 
 #### Scenario: Build script uses TypeScript-compatible string encoding
@@ -16,17 +18,22 @@ The system SHALL provide a build script that scans `packages/cli/site/`, reads a
 
 ### Requirement: Build script excludes non-template directories
 
-The system SHALL exclude `node_modules/`, `topics/`, `.vitepress/cache/`, `.vitepress/dist/`, and `package-lock.json` from the scanned files. Files beginning with `.` (excluding `.vitepress/`) SHALL also be excluded.
+The system SHALL exclude `node_modules/`, `topics/`, `dist/`, `package-lock.json`, and `pnpm-lock.yaml` from the scanned files.
 
 #### Scenario: node_modules is not included
 
-- **WHEN** `packages/cli/site/node_modules/` exists (e.g., from running vitepress dev during development)
+- **WHEN** `packages/cli/site/node_modules/` exists (e.g., from running `pnpm install` during development)
 - **THEN** no files from `node_modules/` appear in the generated `SITE_FILES`
 
 #### Scenario: fixture topics are not included
 
 - **WHEN** `packages/cli/site/topics/` contains fixture data for development
 - **THEN** no files from `topics/` appear in the generated `SITE_FILES`
+
+#### Scenario: dist directory is not included
+
+- **WHEN** `packages/cli/site/dist/` exists (e.g., from running `vite build` during development)
+- **THEN** no files from `dist/` appear in the generated `SITE_FILES`
 
 ### Requirement: Build script is integrated into the CLI build pipeline
 

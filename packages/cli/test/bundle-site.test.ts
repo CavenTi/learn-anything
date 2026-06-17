@@ -55,18 +55,16 @@ describe('bundleSite', () => {
   });
 
   it('scans nested directories', () => {
-    createFile('.vitepress/config.mts', 'export default {}');
-    createFile('.vitepress/theme/index.ts', 'export {}');
-    createFile('pages/index.md', '# Home');
-    createFile('pages/topics/[slug].md', '# Topic');
+    createFile('src/components/Dashboard.vue', '<template></template>');
+    createFile('src/composables/useI18n.ts', 'export {}');
+    createFile('src/router/index.ts', 'export {}');
 
     const result = bundleSite(tmpDir);
 
     expect(Object.keys(result).sort()).toEqual([
-      '.vitepress/config.mts',
-      '.vitepress/theme/index.ts',
-      'pages/index.md',
-      'pages/topics/[slug].md',
+      'src/components/Dashboard.vue',
+      'src/composables/useI18n.ts',
+      'src/router/index.ts',
     ]);
   });
 
@@ -101,30 +99,29 @@ describe('bundleSite', () => {
     expect(Object.keys(result)).toEqual(['package.json']);
   });
 
-  it('excludes .vitepress/cache and .vitepress/dist', () => {
-    createFile('.vitepress/config.mts', 'export default {}');
-    createFile('.vitepress/cache/deps/foo.js', '//');
-    createFile('.vitepress/dist/index.html', '<html>');
-    createFile('.vitepress/dist/assets/app.js', '//');
+  it('excludes dist directory', () => {
+    createFile('package.json', '{}');
+    createFile('dist/index.html', '<html>');
+    createFile('dist/assets/app.js', '//');
 
     const result = bundleSite(tmpDir);
 
-    expect(Object.keys(result)).toEqual(['.vitepress/config.mts']);
+    expect(Object.keys(result)).toEqual(['package.json']);
   });
 
-  it('preserves other .vitepress subdirectories', () => {
-    createFile('.vitepress/theme/index.ts', 'export {}');
-    createFile('.vitepress/theme/components/Dashboard.vue', '<template>');
-    createFile('.vitepress/theme/composables/useI18n.ts', 'export {}');
-    createFile('.vitepress/theme/styles/custom.css', 'body {}');
+  it('preserves src subdirectories', () => {
+    createFile('src/components/Dashboard.vue', '<template>');
+    createFile('src/components/TopicCard.vue', '<template>');
+    createFile('src/composables/useI18n.ts', 'export {}');
+    createFile('src/styles/main.css', 'body {}');
 
     const result = bundleSite(tmpDir);
 
     expect(Object.keys(result).sort()).toEqual([
-      '.vitepress/theme/components/Dashboard.vue',
-      '.vitepress/theme/composables/useI18n.ts',
-      '.vitepress/theme/index.ts',
-      '.vitepress/theme/styles/custom.css',
+      'src/components/Dashboard.vue',
+      'src/components/TopicCard.vue',
+      'src/composables/useI18n.ts',
+      'src/styles/main.css',
     ]);
   });
 
@@ -255,12 +252,12 @@ describe('generateFilesTs', () => {
 
   it('handles filenames with special characters', () => {
     const files = {
-      'pages/topics/[slug].md': '# Topic',
-      'pages/topics/[slug].paths.js': 'export default { paths() { return []; } }',
+      'src/router/index.ts': 'export default {}',
+      'src/composables/useI18n.ts': 'export function useI18n() {}',
     };
     const result = generateFilesTs(files);
 
-    expect(result).toContain(`'pages/topics/[slug].md'`);
-    expect(result).toContain(`'pages/topics/[slug].paths.js'`);
+    expect(result).toContain(`'src/router/index.ts'`);
+    expect(result).toContain(`'src/composables/useI18n.ts'`);
   });
 });

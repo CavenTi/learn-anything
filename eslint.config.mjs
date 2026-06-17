@@ -14,6 +14,7 @@ export default tseslint.config(
       '.claude/',
       '.learn/',
       'packages/cli/site/topics/',
+      'packages/cli/test/fixtures/',
     ],
   },
   {

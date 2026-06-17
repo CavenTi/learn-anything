@@ -3,702 +3,767 @@
 
 export const SITE_FILES: Record<string, string> = {
   '.gitignore': `node_modules
-.vitepress/cache
-.vitepress/dist
+dist
 `,
-  '.vitepress/config.mts': `import { defineConfig } from 'vitepress';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-import tailwindcss from '@tailwindcss/vite';
+  'env.d.ts': `/// <reference types="vite/client" />
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+declare module '*.vue' {
+  import type { DefineComponent } from 'vue';
+  const component: DefineComponent<object, object, unknown>;
+  export default component;
+}
 
-export default defineConfig({
-  title: 'Learn Anything',
-  description: 'Interactive learning knowledge map',
-
-  srcDir: resolve(__dirname, '..', 'pages'),
-  outDir: resolve(__dirname, 'dist'),
-  cacheDir: resolve(__dirname, 'cache'),
-
-  themeConfig: {
-    nav: [],
-    sidebar: [],
+declare module '*.md' {
+  const content: string;
+  export default content;
+}
+`,
+  'index.html': `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learn Anything</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400..700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+`,
+  'package.json': `{
+  "name": "learn-anything-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-
-  vite: {
-    plugins: [tailwindcss()],
-    resolve: {
-      alias: {
-        '@data': resolve(__dirname, '..', 'topics'),
-      },
-    },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
+    "tailwindcss": "^4.3.1",
+    "vue": "^3.5.38",
+    "vue-router": "^4.6.3"
   },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
+  }
+}
+`,
+  'src/App.vue': `<script setup lang="ts">
+import { computed, onMounted, ref, watch, provide } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import AppSidebar from './components/AppSidebar.vue';
+import ContentViewer from './components/ContentViewer.vue';
+import type { SelectedFilePayload } from './composables/useTopicData';
+
+const route = useRoute();
+const router = useRouter();
+
+const sidebarContext = computed<'dashboard' | 'topic'>(() => {
+  return route.name === 'topic' ? 'topic' : 'dashboard';
 });
+
+const currentTopicSlug = computed(() => route.params.slug as string | undefined);
+
+/* --- Shared state: sidebar file selection → TopicPage --- */
+const topicSelectedFile = ref<SelectedFilePayload | null>(null);
+provide('topicSelectedFile', topicSelectedFile);
+
+function onFileSelected(payload: SelectedFilePayload | null) {
+  topicSelectedFile.value = payload;
+}
+
+function onTopicSelected(slug: string) {
+  topicSelectedFile.value = null;
+  router.push(\`/topics/\${slug}\`);
+}
+
+function onBackToDashboard() {
+  router.push('/');
+}
+
+// Reset file selection when route changes
+watch(
+  () => route.fullPath,
+  () => {
+    topicSelectedFile.value = null;
+  },
+);
+
+/* --- Dark mode --- */
+function applyDarkMode() {
+  const stored = localStorage.getItem('learn-anything-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = stored === 'dark' || (!stored && prefersDark);
+  document.documentElement.classList.toggle('dark', isDark);
+}
+
+onMounted(() => {
+  applyDarkMode();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyDarkMode);
+});
+</script>
+
+<template>
+  <div class="flex min-h-screen bg-(--color-page) text-(--color-ink)">
+    <AppSidebar
+      :context="sidebarContext"
+      :topic-slug="currentTopicSlug"
+      @file-selected="onFileSelected"
+      @topic-selected="onTopicSelected"
+      @back-to-dashboard="onBackToDashboard"
+    />
+
+    <main class="flex-1 min-w-0 lg:pl-68">
+      <div class="px-6 py-10 lg:px-10">
+        <router-view />
+      </div>
+    </main>
+  </div>
+</template>
 `,
-  '.vitepress/theme/components/Dashboard.vue': `<script setup lang="ts">
+  'src/components/AppSidebar.vue': `<script setup lang="ts">
+import { ref } from 'vue';
+import { useI18n } from '../composables/useI18n';
+import type { SelectedFilePayload } from '../composables/useTopicData';
+import SidebarMobileToggle from './sidebar/SidebarMobileToggle.vue';
+import SidebarDashboard from './sidebar/SidebarDashboard.vue';
+import SidebarTopicTree from './sidebar/SidebarTopicTree.vue';
+import SidebarExerciseTree from './sidebar/SidebarExerciseTree.vue';
+import SidebarFooter from './sidebar/SidebarFooter.vue';
+
+defineProps<{
+  context: 'dashboard' | 'topic';
+  topicSlug?: string;
+}>();
+
+const emit = defineEmits<{
+  'file-selected': [file: SelectedFilePayload | null];
+  'topic-selected': [slug: string];
+  'back-to-dashboard': [];
+}>();
+
+const { t } = useI18n();
+
+const mobileOpen = ref(false);
+const tabMode = ref<'topics' | 'exercises'>('topics');
+
+function onMobileClose() {
+  mobileOpen.value = false;
+}
+
+function onTopicSelected(slug: string) {
+  emit('topic-selected', slug);
+  mobileOpen.value = false;
+}
+
+function onFileSelected(payload: { path: string; content: string; type: 'markdown' | 'code' }) {
+  emit('file-selected', payload);
+  mobileOpen.value = false;
+}
+
+function onKnowledgeMap() {
+  emit('file-selected', null);
+}
+</script>
+
+<template>
+  <SidebarMobileToggle
+    :mobile-open="mobileOpen"
+    @toggle="mobileOpen = !mobileOpen"
+    @close="onMobileClose"
+  />
+
+  <aside
+    class="fixed top-0 left-0 bottom-0 z-40 w-68 bg-(--color-bg-alt) flex flex-col transition-transform duration-200 lg:translate-x-0"
+    :class="mobileOpen ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <div class="px-6 pt-6 pb-4">
+      <button
+        class="text-base font-semibold text-text-1 hover:text-brand-2 transition-colors cursor-pointer"
+        @click="emit('back-to-dashboard')"
+      >
+        Learn Anything
+      </button>
+    </div>
+
+    <div class="mx-6 border-t border-(--color-divider)" />
+
+    <!-- Dashboard: topic list -->
+    <SidebarDashboard
+      v-if="context === 'dashboard'"
+      @topic-selected="onTopicSelected"
+    />
+
+    <!-- Topic mode: tabs + trees -->
+    <template v-else>
+      <div class="px-6 pt-3">
+        <div class="flex gap-6">
+          <button
+            class="pb-2 text-xs font-medium transition-colors cursor-pointer border-b-2 -mb-px"
+            :class="
+              tabMode === 'topics'
+                ? 'border-brand-2 text-brand-2'
+                : 'border-transparent text-text-2 hover:text-text-1'
+            "
+            @click="tabMode = 'topics'"
+          >
+            {{ t('sidebar.topics') }}
+          </button>
+          <button
+            class="pb-2 text-xs font-medium transition-colors cursor-pointer border-b-2 -mb-px"
+            :class="
+              tabMode === 'exercises'
+                ? 'border-brand-2 text-brand-2'
+                : 'border-transparent text-text-2 hover:text-text-1'
+            "
+            @click="tabMode = 'exercises'"
+          >
+            {{ t('sidebar.exercises') }}
+          </button>
+        </div>
+      </div>
+
+      <div class="mx-6 border-t border-(--color-divider)" />
+
+      <SidebarTopicTree
+        v-if="tabMode === 'topics' && topicSlug"
+        :topic-slug="topicSlug"
+        @file-selected="onFileSelected"
+        @knowledge-map="onKnowledgeMap"
+      />
+
+      <SidebarExerciseTree
+        v-if="tabMode === 'exercises' && topicSlug"
+        :topic-slug="topicSlug"
+        @file-selected="onFileSelected"
+      />
+    </template>
+
+    <SidebarFooter />
+  </aside>
+</template>
+`,
+  'src/components/ContentViewer.vue': `<script setup lang="ts">
 import { computed } from 'vue';
+import { renderMarkdown, highlightCode, getFileExtension, isMarkdownFile } from '../utils/markdown';
+
+export interface SelectedFile {
+  path: string;
+  content: string;
+  type: 'markdown' | 'code';
+}
+
+const props = defineProps<{
+  file: SelectedFile | null;
+}>();
+
+const fileDisplayName = computed(() => {
+  if (!props.file) return '';
+  return props.file.path.split('/').pop() || '';
+});
+
+const fileExt = computed(() => getFileExtension(fileDisplayName.value));
+
+const renderedHtml = computed(() => {
+  if (!props.file) return '';
+  if (props.file.type === 'markdown') return renderMarkdown(props.file.content);
+  return highlightCode(props.file.content, fileExt.value);
+});
+
+const isMd = computed(() => props.file?.type === 'markdown');
+</script>
+
+<template>
+  <div class="h-full">
+    <div v-if="!file" class="flex items-center justify-center h-full min-h-75 text-sm text-text-3">
+      Select a file from the sidebar to view its content
+    </div>
+
+    <!-- Markdown: VitePress-style — no wrapper, content flows -->
+    <div v-else-if="isMd" class="prose-content" v-html="renderedHtml" />
+
+    <!-- Code: VitePress code block style -->
+    <div v-else class="prose-content rounded-lg overflow-hidden bg-(--color-bg-alt)">
+      <div class="flex items-center justify-between px-5 py-2 bg-transparent">
+        <span class="text-xs text-text-3 font-mono">{{ fileDisplayName }}</span>
+      </div>
+      <pre
+        class="m-0! p-0! bg-transparent! text-left overflow-x-auto"
+      ><code class="block px-6! py-5! leading-[1.7] font-mono text-[0.875em] text-text-2" v-html="renderedHtml" /></pre>
+    </div>
+  </div>
+</template>
+`,
+  'src/components/Dashboard.vue': `<script setup lang="ts">
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from '../composables/useI18n';
 import { listAllTopics } from '../composables/useTopicData';
-import TopicCard from './TopicCard.vue';
+
+const router = useRouter();
+const { t } = useI18n();
+const topics = computed(() => listAllTopics());
+
+function goToTopic(slug: string) {
+  router.push(\`/topics/\${slug}\`);
+}
+</script>
+
+<template>
+  <div class="w-full">
+    <!-- Header — VitePress-style page heading -->
+    <h1 class="mb-4">
+      {{ t('dashboard.title') }}
+    </h1>
+    <p v-if="topics.length > 0" class="text-sm text-text-3 mb-10">
+      {{ topics.length }} {{ topics.length === 1 ? 'topic' : 'topics' }}
+    </p>
+
+    <!-- Empty state -->
+    <div
+      v-if="topics.length === 0"
+      class="flex flex-col items-center justify-center py-24 text-center"
+    >
+      <p class="text-sm font-medium text-text-2 mb-2">
+        {{ t('dashboard.noTopics') }}
+      </p>
+      <p class="text-xs text-text-3 max-w-md">
+        {{ t('dashboard.startLearning') }}
+      </p>
+    </div>
+
+    <!-- Topic cards — elastic grid, fixed card size, fills available width -->
+    <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+      <button
+        v-for="topic in topics"
+        :key="topic.slug"
+        class="text-left bg-(--color-bg-soft) rounded-xl border border-(--color-divider) p-6 hover:border-brand-2 transition-colors duration-150 cursor-pointer"
+        @click="goToTopic(topic.slug)"
+      >
+        <!-- Title -->
+        <h3 class="text-base font-semibold text-text-1 leading-snug mb-3">
+          {{ topic.name }}
+        </h3>
+
+        <!-- Stats -->
+        <p class="text-[13px] text-text-2 leading-relaxed">
+          {{ topic.domainCount }} {{ t('topic.domains') }} · {{ topic.totalConcepts }}
+          {{ t('topic.concepts') }} · {{ topic.masteredCount }}/{{ topic.totalConcepts }}
+          {{ t('topic.mastered') }}
+        </p>
+
+        <!-- Progress bar — thin, VitePress style -->
+        <div class="mt-4 flex items-center gap-3">
+          <div class="flex-1 h-1 bg-(--color-divider) rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-brand-2 transition-all duration-500"
+              :style="{ width: \`\${topic.percentage}%\` }"
+            />
+          </div>
+          <span class="text-xs font-semibold tabular-nums text-text-2">
+            {{ topic.percentage }}%
+          </span>
+        </div>
+      </button>
+    </div>
+  </div>
+</template>
+`,
+  'src/components/LanguageSwitch.vue': `<script setup lang="ts">
+import { useI18n } from '../composables/useI18n';
+
+const { toggleLocale, t } = useI18n();
+</script>
+
+<template>
+  <button
+    class="text-xs font-medium text-text-2 hover:text-text-1 transition-colors cursor-pointer"
+    @click="toggleLocale"
+  >
+    {{ t('lang.switch') }}
+  </button>
+</template>
+`,
+  'src/components/sidebar/SidebarDashboard.vue': `<script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from '../../composables/useI18n';
+import { listAllTopics } from '../../composables/useTopicData';
+
+defineEmits<{
+  'topic-selected': [slug: string];
+}>();
 
 const { t } = useI18n();
 const topics = computed(() => listAllTopics());
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="mb-10">
-      <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-        {{ t('dashboard.title') }}
-      </h1>
-      <p class="mt-2 text-slate-500 dark:text-slate-400 text-sm">
-        {{ topics.length }} {{ topics.length === 1 ? 'topic' : 'topics' }}
-      </p>
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-if="topics.length === 0"
-      class="flex flex-col items-center justify-center py-24 text-center"
+  <nav class="flex-1 overflow-y-auto px-6 py-4">
+    <p
+      v-if="topics.length > 0"
+      class="text-xs font-semibold text-text-2 uppercase tracking-wide mb-2"
     >
-      <div class="text-6xl mb-6 opacity-80">📚</div>
-      <p class="text-lg font-medium text-slate-700 dark:text-slate-200 mb-2">
-        {{ t('dashboard.noTopics') }}
-      </p>
-      <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-        {{ t('dashboard.startLearning') }}
-      </p>
-    </div>
+      Topics
+    </p>
 
-    <!-- Card Grid -->
-    <div
-      v-else
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-    >
-      <TopicCard
+    <div class="space-y-0.5">
+      <button
         v-for="topic in topics"
         :key="topic.slug"
-        :slug="topic.slug"
-        :name="topic.name"
-        :domain-count="topic.domainCount"
-        :total-concepts="topic.totalConcepts"
-        :mastered-count="topic.masteredCount"
-        :percentage="topic.percentage"
-      />
-    </div>
-  </div>
-</template>
-`,
-  '.vitepress/theme/components/DomainPage.vue': `<script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vitepress';
-import { useI18n } from '../composables/useI18n';
-import SessionNotes from './SessionNotes.vue';
-import ExerciseView from './ExerciseView.vue';
-
-const props = defineProps<{ slug: string; domain: string }>();
-
-const router = useRouter();
-const { t } = useI18n();
-
-const activeTab = ref<'notes' | 'exercises'>('notes');
-
-function backToTopic() {
-  router.go(\`/topics/\${props.slug}\`);
-}
-</script>
-
-<template>
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <!-- Back link -->
-    <a
-      class="inline-flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 hover:underline transition-colors mb-8 cursor-pointer"
-      :href="\`/topics/\${slug}\`"
-      @click.prevent="backToTopic"
-    >
-      <span>←</span>
-      {{ t('domain.backToMap') }}
-    </a>
-
-    <!-- Tabs -->
-    <div class="flex gap-1 mb-8 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-      <button
-        class="px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer"
-        :class="activeTab === 'notes'
-          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-        @click="activeTab = 'notes'"
+        class="w-full text-left px-3 py-1.5 rounded-md text-sm font-medium text-text-2 hover:text-text-1 transition-colors cursor-pointer"
+        @click="$emit('topic-selected', topic.slug)"
       >
-        📝 {{ t('domain.notes') }}
-      </button>
-      <button
-        class="px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer"
-        :class="activeTab === 'exercises'
-          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'"
-        @click="activeTab = 'exercises'"
-      >
-        🏋️ {{ t('domain.exercises') }}
+        <span class="block">{{ topic.name }}</span>
+        <span class="block text-xs mt-0.5 font-normal text-text-3">
+          {{ topic.masteredCount }}/{{ topic.totalConcepts }} mastered
+        </span>
       </button>
     </div>
 
-    <!-- Content -->
-    <SessionNotes v-if="activeTab === 'notes'" :slug="slug" :domain="domain" />
-    <ExerciseView v-else :slug="slug" :domain="domain" />
-  </div>
-</template>
-`,
-  '.vitepress/theme/components/ExerciseView.vue': `<script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useI18n } from '../composables/useI18n';
-import { scanExercises, loadExerciseContent } from '../composables/useTopicData';
-import type { ExerciseGroup } from '../composables/useTopicData';
-
-const props = defineProps<{ slug: string; domain: string }>();
-
-const { t } = useI18n();
-
-const allGroups = computed<ExerciseGroup[]>(() => scanExercises(props.slug));
-const groups = computed(() => allGroups.value);
-
-const expandedConcept = ref<string | null>(null);
-const activeFile = ref<string | null>(null);
-
-function toggleConcept(conceptSlug: string) {
-  expandedConcept.value =
-    expandedConcept.value === conceptSlug ? null : conceptSlug;
-  activeFile.value = null;
-}
-
-function viewFile(path: string) {
-  activeFile.value = path;
-}
-
-const fileContent = computed(() => {
-  if (!activeFile.value) return '';
-  return loadExerciseContent(activeFile.value) || '';
-});
-</script>
-
-<template>
-  <!-- Empty -->
-  <div v-if="groups.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
-    <div class="text-4xl mb-4 opacity-70">🏋️</div>
-    <p class="text-slate-500 dark:text-slate-400">{{ t('domain.noExercises') }}</p>
-  </div>
-
-  <!-- Exercise panel -->
-  <div v-else class="flex gap-6 min-h-[380px]">
-    <!-- Concept group list -->
-    <div class="w-64 shrink-0 overflow-y-auto max-h-[60vh]">
-      <div class="space-y-3">
-        <div
-          v-for="group in groups"
-          :key="group.conceptSlug"
-          class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden transition-shadow hover:shadow-sm"
-        >
-          <!-- Concept header -->
-          <button
-            class="w-full flex items-center justify-between px-4 py-3 text-left cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-            @click="toggleConcept(group.conceptSlug)"
-          >
-            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              {{ group.conceptName }}
-            </span>
-            <span
-              class="text-xs text-slate-400 transition-transform duration-200"
-              :class="{ 'rotate-180': expandedConcept === group.conceptSlug }"
-            >
-              ▼
-            </span>
-          </button>
-
-          <!-- File list (expandable) -->
-          <div
-            v-if="expandedConcept === group.conceptSlug"
-            class="border-t border-slate-100 dark:border-slate-800 px-3 py-2 bg-slate-50/50 dark:bg-slate-800/30 space-y-1"
-          >
-            <button
-              v-for="file in group.files"
-              :key="file.path"
-              class="block w-full text-left px-3 py-1.5 rounded-md text-xs font-mono transition-colors cursor-pointer"
-              :class="activeFile === file.path
-                ? 'bg-indigo-100 dark:bg-indigo-400/20 text-indigo-700 dark:text-indigo-300 font-medium'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-800 dark:hover:text-slate-200'"
-              @click="viewFile(file.path)"
-            >
-              {{ file.name }}
-            </button>
-          </div>
-        </div>
-      </div>
+    <div v-if="topics.length === 0" class="text-xs text-text-2 mt-2">
+      {{ t('dashboard.noTopics') }}
     </div>
-
-    <!-- Code viewer -->
-    <div class="flex-1 min-w-0">
-      <div
-        v-if="activeFile"
-        class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-      >
-        <!-- File header -->
-        <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-          <span class="w-3 h-3 rounded-full bg-red-400" />
-          <span class="w-3 h-3 rounded-full bg-amber-400" />
-          <span class="w-3 h-3 rounded-full bg-emerald-400" />
-          <span class="ml-2 text-xs text-slate-400 font-mono">{{ activeFile.split('/').pop() }}</span>
-        </div>
-        <!-- Code -->
-        <pre class="overflow-auto max-h-[55vh] m-0 p-5 text-sm font-mono leading-relaxed text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 whitespace-pre-wrap break-words">{{ fileContent }}</pre>
-      </div>
-
-      <!-- No file selected -->
-      <div
-        v-else
-        class="flex items-center justify-center h-full min-h-[200px] text-slate-400 dark:text-slate-500 text-sm"
-      >
-        Select a file to view its content
-      </div>
-    </div>
-  </div>
+  </nav>
 </template>
 `,
-  '.vitepress/theme/components/LanguageSwitch.vue': `<script setup lang="ts">
-import { useI18n } from '../composables/useI18n';
+  'src/components/sidebar/SidebarExerciseTree.vue': `<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import { useI18n } from '../../composables/useI18n';
+import {
+  scanExercises,
+  loadExerciseContent,
+} from '../../composables/useTopicData';
+import type { ExerciseGroup, ExerciseFile } from '../../composables/useTopicData';
+import { isMarkdownFile } from '../../utils/markdown';
 
-const { locale, toggleLocale, t } = useI18n();
-</script>
-
-<template>
-  <button
-    class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
-    :title="locale === 'en' ? 'Switch to 中文' : '切换到 English'"
-    @click="toggleLocale"
-  >
-    <span class="text-sm">🌐</span>
-    {{ t('lang.switch') }}
-  </button>
-</template>
-`,
-  '.vitepress/theme/components/Layout.vue': `<script setup lang="ts">
-import DefaultTheme from 'vitepress/theme';
-import LanguageSwitch from './LanguageSwitch.vue';
-
-const { Layout } = DefaultTheme;
-</script>
-
-<template>
-  <Layout>
-    <template #nav-bar-content-after>
-      <LanguageSwitch />
-    </template>
-  </Layout>
-</template>
-`,
-  '.vitepress/theme/components/ProgressBar.vue': `<script setup lang="ts">
-defineProps<{
-  value: number;
-  label?: string;
+const props = defineProps<{
+  topicSlug: string;
 }>();
-</script>
 
-<template>
-  <div
-    class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"
-    role="progressbar"
-    :aria-valuenow="value"
-    aria-valuemin="0"
-    aria-valuemax="100"
-    :aria-label="label || \`\${value}%\`"
-  >
-    <div
-      class="h-full rounded-full transition-all duration-500 ease-out"
-      :class="value === 100
-        ? 'bg-gradient-to-r from-emerald-400 to-emerald-300'
-        : 'bg-gradient-to-r from-indigo-400 to-indigo-300'"
-      :style="{ width: \`\${value}%\` }"
-    />
-  </div>
-</template>
-`,
-  '.vitepress/theme/components/SessionNotes.vue': `<script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { useI18n } from '../composables/useI18n';
-import { scanSessions, loadMarkdown } from '../composables/useTopicData';
-import type { SessionFile } from '../composables/useTopicData';
-
-const props = defineProps<{ slug: string; domain: string }>();
+const emit = defineEmits<{
+  'file-selected': [file: { path: string; content: string; type: 'markdown' | 'code' }];
+}>();
 
 const { t } = useI18n();
 
-const files = computed<SessionFile[]>(() => scanSessions(props.slug, props.domain));
-const activePath = ref<string | null>(null);
+const expandedConcepts = ref<Set<string>>(new Set());
 
-// Auto-select first file when files change
+const exerciseGroups = computed<ExerciseGroup[]>(() => scanExercises(props.topicSlug));
+
 watch(
-  files,
-  (newFiles) => {
-    if (newFiles.length > 0 && !newFiles.find((f) => f.path === activePath.value)) {
-      activePath.value = newFiles[0].path;
-    }
+  () => props.topicSlug,
+  () => {
+    expandedConcepts.value = new Set();
   },
   { immediate: true },
 );
 
-const selectedContent = computed(() => {
-  if (!activePath.value) return '';
-  return loadMarkdown(activePath.value) || '';
-});
-</script>
+function toggleConcept(conceptSlug: string) {
+  const s = new Set(expandedConcepts.value);
+  if (s.has(conceptSlug)) s.delete(conceptSlug);
+  else s.add(conceptSlug);
+  expandedConcepts.value = s;
+}
 
-<template>
-  <!-- Empty -->
-  <div v-if="files.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
-    <div class="text-4xl mb-4 opacity-70">📝</div>
-    <p class="text-slate-500 dark:text-slate-400">{{ t('domain.noNotes') }}</p>
-  </div>
-
-  <!-- Two-column layout -->
-  <div v-else class="flex gap-6 min-h-[420px]">
-    <!-- File list sidebar -->
-    <div class="w-56 shrink-0 border-r border-slate-200 dark:border-slate-800 pr-4 overflow-y-auto max-h-[60vh]">
-      <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 pl-2">
-        Sessions
-      </div>
-      <nav class="space-y-0.5">
-        <button
-          v-for="file in files"
-          :key="file.path"
-          class="block w-full text-left px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer"
-          :class="file.path === activePath
-            ? 'bg-indigo-50 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-400 font-medium'
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'"
-          @click="activePath = file.path"
-        >
-          {{ file.filename }}
-        </button>
-      </nav>
-    </div>
-
-    <!-- Content -->
-    <div class="flex-1 min-w-0">
-      <div class="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-        <pre class="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-slate-700 dark:text-slate-300 p-0 m-0 bg-transparent">{{ selectedContent }}</pre>
-      </div>
-    </div>
-  </div>
-</template>
-`,
-  '.vitepress/theme/components/StatusIcon.vue': `<script setup lang="ts">
-import type { ConceptStatus } from '../composables/useTopicData';
-
-defineProps<{
-  status: ConceptStatus;
-}>();
-</script>
-
-<template>
-  <span
-    class="inline-flex items-center justify-center w-2.5 h-2.5 rounded-full shrink-0"
-    :class="{
-      'bg-emerald-400 ring-2 ring-emerald-400/30': status === 'mastered',
-      'bg-amber-400 ring-2 ring-amber-400/30 animate-pulse': status === 'in_progress',
-      'bg-orange-400 ring-2 ring-orange-400/30': status === 'needs_practice',
-      'bg-transparent border-2 border-slate-300 dark:border-slate-600': status === 'unexplored',
-    }"
-  />
-</template>
-`,
-  '.vitepress/theme/components/TopicCard.vue': `<script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vitepress';
-import { useI18n } from '../composables/useI18n';
-import ProgressBar from './ProgressBar.vue';
-
-const props = defineProps<{
-  slug: string;
-  name: string;
-  domainCount: number;
-  totalConcepts: number;
-  masteredCount: number;
-  percentage: number;
-}>();
-
-const router = useRouter();
-const { t } = useI18n();
-
-const masteryVariant = computed(() => {
-  if (props.percentage === 100) return 'mastered';
-  if (props.percentage >= 50) return 'in_progress';
-  if (props.percentage > 0) return 'started';
-  return 'new';
-});
-
-const masteryLabel = computed(() => {
-  if (props.percentage === 100) return t('status.mastered');
-  if (props.percentage >= 50) return t('status.inProgress');
-  return '';
-});
-
-const badgeClass = computed(() => {
-  switch (masteryVariant.value) {
-    case 'mastered':
-      return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-400';
-    case 'in_progress':
-      return 'bg-indigo-50 text-indigo-700 ring-indigo-600/20 dark:bg-indigo-400/10 dark:text-indigo-400';
-    case 'started':
-      return 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400';
-    default:
-      return 'bg-slate-50 text-slate-600 ring-slate-500/20 dark:bg-slate-400/10 dark:text-slate-400';
-  }
-});
-
-function navigate() {
-  router.go(\`/topics/\${props.slug}\`);
+async function selectExerciseFile(file: ExerciseFile) {
+  const content = await loadExerciseContent(file.path);
+  if (content === null) return;
+  const type = isMarkdownFile(file.name) ? 'markdown' : 'code';
+  emit('file-selected', { path: file.path, content, type });
 }
 </script>
 
 <template>
-  <div
-    class="group relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-800 hover:-translate-y-0.5"
-    @click="navigate"
-  >
-    <!-- Top accent bar — colored based on mastery -->
-    <div
-      class="absolute top-0 left-6 right-6 h-0.5 rounded-b-full transition-colors duration-300"
-      :class="{
-        'bg-emerald-400': masteryVariant === 'mastered',
-        'bg-indigo-400': masteryVariant === 'in_progress',
-        'bg-amber-400': masteryVariant === 'started',
-        'bg-slate-200 dark:bg-slate-700': masteryVariant === 'new',
-      }"
-    />
+  <nav class="flex-1 overflow-y-auto px-6 py-3">
+    <div v-if="exerciseGroups.length > 0" class="space-y-px">
+      <div v-for="group in exerciseGroups" :key="group.conceptSlug">
+        <button
+          class="w-full flex items-center gap-1.5 py-1 text-sm font-medium transition-colors cursor-pointer"
+          :class="
+            expandedConcepts.has(group.conceptSlug)
+              ? 'text-text-1'
+              : 'text-text-2 hover:text-text-1'
+          "
+          @click="toggleConcept(group.conceptSlug)"
+        >
+          <span
+            class="text-[10px] transition-transform duration-150 shrink-0 w-3 text-center"
+            :class="expandedConcepts.has(group.conceptSlug) ? 'rotate-90' : ''"
+          >▶</span>
+          <span class="truncate">{{ group.conceptName }}</span>
+        </button>
 
-    <!-- Header -->
-    <div class="flex items-start justify-between gap-3 pt-1">
-      <h3 class="text-base font-semibold text-slate-900 dark:text-white leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-        {{ name }}
-      </h3>
-      <span
-        v-if="masteryLabel"
-        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset shrink-0"
-        :class="badgeClass"
-      >
-        {{ masteryLabel }}
-      </span>
-    </div>
-
-    <!-- Stats -->
-    <div class="mt-4 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-      <span class="inline-flex items-center gap-1">
-        <span class="i-carbon-folder text-xs" />
-        {{ domainCount }} {{ t('topic.domains') }}
-      </span>
-      <span class="inline-flex items-center gap-1">
-        <span class="i-carbon-idea text-xs" />
-        {{ totalConcepts }} {{ t('topic.concepts') }}
-      </span>
-      <span class="inline-flex items-center gap-1">
-        <span class="i-carbon-checkmark text-xs" />
-        {{ masteredCount }}/{{ totalConcepts }} {{ t('topic.mastered') }}
-      </span>
-    </div>
-
-    <!-- Progress -->
-    <div class="mt-4 flex items-center gap-3">
-      <span
-        class="text-2xl font-bold tabular-nums"
-        :class="{
-          'text-emerald-500': percentage === 100,
-          'text-indigo-500': percentage >= 50 && percentage < 100,
-          'text-amber-500': percentage > 0 && percentage < 50,
-          'text-slate-300 dark:text-slate-600': percentage === 0,
-        }"
-      >
-        {{ percentage }}%
-      </span>
-      <div class="flex-1">
-        <ProgressBar :value="percentage" />
+        <div v-if="expandedConcepts.has(group.conceptSlug)" class="pl-4 mb-1 space-y-px">
+          <button
+            v-for="file in group.files"
+            :key="file.path"
+            class="block w-full text-left py-1 text-xs text-text-2 hover:text-text-1 transition-colors cursor-pointer truncate font-mono"
+            @click="selectExerciseFile(file)"
+          >
+            {{ file.name }}
+          </button>
+        </div>
       </div>
     </div>
+
+    <div v-else class="py-2 text-xs text-text-3">
+      {{ t('sidebar.noExercises') }}
+    </div>
+  </nav>
+</template>
+`,
+  'src/components/sidebar/SidebarFooter.vue': `<script setup lang="ts">
+import { useI18n } from '../../composables/useI18n';
+import LanguageSwitch from '../LanguageSwitch.vue';
+
+const { t, isDark, toggleDarkMode } = useI18n();
+</script>
+
+<template>
+  <div class="px-6 py-3 border-t border-(--color-divider) flex items-center justify-between">
+    <LanguageSwitch />
+    <button
+      class="p-1.5 rounded-md text-text-2 hover:bg-(--color-bg-soft) hover:text-text-1 transition-colors cursor-pointer"
+      :title="t('theme.switch')"
+      @click="toggleDarkMode"
+    >
+      <svg v-if="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+        />
+      </svg>
+      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+        />
+      </svg>
+    </button>
   </div>
 </template>
 `,
-  '.vitepress/theme/components/TopicPage.vue': `<script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vitepress';
+  'src/components/sidebar/SidebarMobileToggle.vue': `<script setup lang="ts">
+defineProps<{
+  mobileOpen: boolean;
+}>();
+
+defineEmits<{
+  toggle: [];
+  close: [];
+}>();
+</script>
+
+<template>
+  <button
+    class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-(--color-bg) border border-(--color-divider) text-text-2"
+    @click="$emit('toggle')"
+  >
+    <span class="sr-only">Menu</span>
+    <svg v-if="!mobileOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 6h16M4 12h16M4 18h16"
+      />
+    </svg>
+    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M6 18L18 6M6 6l12 12"
+      />
+    </svg>
+  </button>
+
+  <div v-if="mobileOpen" class="lg:hidden fixed inset-0 z-30 bg-black/60" @click="$emit('close')" />
+</template>
+`,
+  'src/components/sidebar/SidebarTopicTree.vue': `<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import { useI18n } from '../../composables/useI18n';
+import {
+  loadTopic,
+  scanSessions,
+  loadSessionContent,
+} from '../../composables/useTopicData';
+import type { Domain, SessionFile } from '../../composables/useTopicData';
+
+const props = defineProps<{
+  topicSlug: string;
+}>();
+
+const emit = defineEmits<{
+  'file-selected': [file: { path: string; content: string; type: 'markdown' }];
+  'knowledge-map': [];
+}>();
+
+const { t } = useI18n();
+
+const expandedDomains = ref<Set<string>>(new Set());
+
+interface DomainWithSessions {
+  domain: Domain;
+  sessions: SessionFile[];
+}
+
+const currentState = computed(() => loadTopic(props.topicSlug));
+
+const domainSessions = computed<DomainWithSessions[]>(() => {
+  if (!currentState.value) return [];
+  return currentState.value.domains.map((domain) => ({
+    domain,
+    sessions: scanSessions(props.topicSlug, domain.slug),
+  }));
+});
+
+watch(
+  () => props.topicSlug,
+  (slug) => {
+    expandedDomains.value = new Set();
+    const state = loadTopic(slug);
+    if (state?.domains[0]) expandedDomains.value.add(state.domains[0].slug);
+  },
+  { immediate: true },
+);
+
+function toggleDomain(domainSlug: string) {
+  const s = new Set(expandedDomains.value);
+  if (s.has(domainSlug)) s.delete(domainSlug);
+  else s.add(domainSlug);
+  expandedDomains.value = s;
+}
+
+async function selectSessionFile(file: SessionFile) {
+  const content = await loadSessionContent(file.path);
+  if (content !== null) {
+    emit('file-selected', { path: file.path, content, type: 'markdown' });
+  }
+}
+</script>
+
+<template>
+  <nav class="flex-1 overflow-y-auto px-6 py-3">
+    <button
+      class="w-full text-left text-sm font-semibold text-brand-2 hover:text-brand-1 transition-colors cursor-pointer mb-3"
+      @click="$emit('knowledge-map')"
+    >
+      {{ currentState?.topic || topicSlug }}
+    </button>
+
+    <div v-if="domainSessions.length > 0" class="space-y-px">
+      <div v-for="ds in domainSessions" :key="ds.domain.slug">
+        <button
+          class="w-full flex items-center gap-1.5 py-1 text-sm font-medium transition-colors cursor-pointer"
+          :class="
+            expandedDomains.has(ds.domain.slug)
+              ? 'text-text-1'
+              : 'text-text-2 hover:text-text-1'
+          "
+          @click="toggleDomain(ds.domain.slug)"
+        >
+          <span
+            class="text-[10px] transition-transform duration-150 shrink-0 w-3 text-center"
+            :class="expandedDomains.has(ds.domain.slug) ? 'rotate-90' : ''"
+          >▶</span>
+          <span class="truncate">{{ ds.domain.name }}</span>
+        </button>
+
+        <div v-if="expandedDomains.has(ds.domain.slug)" class="pl-4 mb-1 space-y-px">
+          <div v-if="ds.sessions.length === 0" class="py-1 text-[11px] text-text-3">
+            {{ t('sidebar.noNotes') }}
+          </div>
+          <button
+            v-for="file in ds.sessions"
+            :key="file.path"
+            class="block w-full text-left py-1 text-xs text-text-2 hover:text-text-1 transition-colors cursor-pointer truncate font-medium"
+            @click="selectSessionFile(file)"
+          >
+            {{ file.filename }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="py-2 text-xs text-text-3">
+      {{ t('sidebar.noNotes') }}
+    </div>
+  </nav>
+</template>
+`,
+  'src/components/TopicPage.vue': `<script setup lang="ts">
+import { computed, ref, inject, type Ref } from 'vue';
 import { useI18n } from '../composables/useI18n';
 import { loadTopic, loadKnowledgeMap } from '../composables/useTopicData';
-import type { Domain, StateV1, ConceptStatus } from '../composables/useTopicData';
-import StatusIcon from './StatusIcon.vue';
+import ContentViewer from './ContentViewer.vue';
+import type { SelectedFilePayload } from '../composables/useTopicData';
+import { renderMarkdown } from '../utils/markdown';
 
 const props = defineProps<{ slug: string }>();
 
-const router = useRouter();
 const { t } = useI18n();
 
-const state = computed<StateV1 | null>(() => loadTopic(props.slug));
+const state = computed(() => loadTopic(props.slug));
 const knowledgeMapRaw = computed(() => loadKnowledgeMap(props.slug));
 
-const domainList = computed<Domain[]>(() => state.value?.domains ?? []);
-
-const totalConcepts = computed(() =>
-  domainList.value.reduce((sum, d) => sum + d.concepts.length, 0),
-);
-
-const masteredCount = computed(() =>
-  domainList.value.reduce(
-    (sum, d) => sum + d.concepts.filter((c) => c.status === 'mastered').length,
-    0,
-  ),
-);
-
-const pct = computed(() =>
-  totalConcepts.value > 0
-    ? Math.round((masteredCount.value / totalConcepts.value) * 100)
-    : 0,
-);
-
-const progressColor = computed(() => {
-  if (pct.value === 100) return 'text-emerald-600 dark:text-emerald-400';
-  if (pct.value >= 50) return 'text-indigo-600 dark:text-indigo-400';
-  if (pct.value > 0) return 'text-amber-600 dark:text-amber-400';
-  return 'text-slate-400 dark:text-slate-500';
+const knowledgeMapHtml = computed(() => {
+  const raw = knowledgeMapRaw.value;
+  if (!raw) return '';
+  return renderMarkdown(raw);
 });
 
-function isDomainActive(domainSlug: string): boolean {
-  if (typeof window !== 'undefined') {
-    return window.location.pathname.includes(\`/\${props.slug}/\${domainSlug}\`);
-  }
-  return false;
-}
+/* --- Receive file selection from sidebar via provide/inject --- */
+const selectedFile = inject<Ref<SelectedFilePayload | null>>('topicSelectedFile', ref(null));
 
-function navigateToDomain(domainSlug: string) {
-  router.go(\`/topics/\${props.slug}/\${domainSlug}\`);
-}
-
-function statusLabel(status: ConceptStatus): string {
-  const key = status === 'in_progress' ? 'status.inProgress' : \`status.\${status}\` as any;
-  return t(key);
-}
-
-function statusBadgeClass(status: ConceptStatus): string {
-  switch (status) {
-    case 'mastered':
-      return 'text-emerald-700 dark:text-emerald-400';
-    case 'in_progress':
-      return 'text-amber-700 dark:text-amber-400';
-    case 'needs_practice':
-      return 'text-orange-700 dark:text-orange-400';
-    default:
-      return 'text-slate-400 dark:text-slate-500';
-  }
-}
+const showKnowledgeMap = computed(() => !selectedFile.value);
 </script>
 
 <template>
-  <!-- Topic found -->
-  <div v-if="state" class="flex gap-8 max-w-6xl mx-auto px-4 py-8">
-    <!-- Left Sidebar -->
-    <aside class="w-60 shrink-0 border-r border-slate-200 dark:border-slate-800 pr-5">
-      <div class="sticky top-20">
-        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 pl-3">
-          {{ t('topic.domains') }}
-        </div>
-
-        <nav class="space-y-0.5">
-          <a
-            v-for="domain in domainList"
-            :key="domain.slug"
-            class="block px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-            :class="isDomainActive(domain.slug)
-              ? 'bg-indigo-50 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-400 font-medium'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'"
-            :href="\`/topics/\${slug}/\${domain.slug}\`"
-            @click.prevent="navigateToDomain(domain.slug)"
-          >
-            {{ domain.name }}
-          </a>
-        </nav>
-      </div>
-    </aside>
-
-    <!-- Right Content -->
-    <div class="flex-1 min-w-0">
-      <!-- Title -->
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-        {{ state.topic }}
-      </h1>
-
-      <!-- Progress Summary -->
-      <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm">
-        <span class="font-semibold tabular-nums" :class="progressColor">
-          {{ masteredCount }}/{{ totalConcepts }}
-        </span>
-        <span class="text-slate-400">·</span>
-        <span class="text-slate-500 dark:text-slate-400">{{ t('topic.mastered') }}</span>
-        <span class="text-slate-400">·</span>
-        <span class="font-semibold tabular-nums" :class="progressColor">{{ pct }}%</span>
-        <span class="text-slate-500 dark:text-slate-400">{{ t('topic.progress') }}</span>
-      </div>
-
-      <!-- Domain Sections -->
-      <div class="mt-8 space-y-8">
-        <section v-for="domain in domainList" :key="domain.slug">
-          <h2
-            class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 hover:underline cursor-pointer transition-colors mb-4"
-            @click="navigateToDomain(domain.slug)"
-          >
-            {{ domain.name }}
-          </h2>
-
-          <ul class="space-y-2">
-            <li
-              v-for="concept in domain.concepts"
-              :key="concept.slug"
-              class="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-3 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-colors"
-            >
-              <StatusIcon :status="concept.status" class="mt-0.5" />
-              <strong class="text-sm text-slate-800 dark:text-slate-200">{{ concept.name }}</strong>
-              <span class="text-xs" :class="statusBadgeClass(concept.status)">
-                ({{ statusLabel(concept.status) }})
-              </span>
-              <ul
-                v-if="concept.details.length > 0"
-                class="w-full mt-1 pl-5 space-y-0.5"
-              >
-                <li
-                  v-for="detail in concept.details"
-                  :key="detail"
-                  class="text-xs text-slate-500 dark:text-slate-400 list-disc"
-                >
-                  {{ detail }}
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </section>
-      </div>
-
-      <!-- Empty domains -->
-      <div v-if="domainList.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
-        <div class="text-5xl mb-4 opacity-80">🗂️</div>
-        <p class="text-slate-500 dark:text-slate-400">{{ t('dashboard.noTopics') }}</p>
-      </div>
-    </div>
+  <!-- Topic not found -->
+  <div v-if="!state" class="flex flex-col items-center justify-center py-24 text-center">
+    <div class="text-4xl mb-4 opacity-60 select-none">🔍</div>
+    <p class="text-base text-(--color-pencil)">{{ t('topic.notFound') }}: {{ slug }}</p>
   </div>
 
-  <!-- Topic not found -->
-  <div v-else class="flex flex-col items-center justify-center py-24 text-center max-w-6xl mx-auto px-4">
-    <div class="text-5xl mb-4 opacity-80">🔍</div>
-    <p class="text-lg font-medium text-slate-700 dark:text-slate-200">
-      Topic not found: {{ slug }}
-    </p>
+  <!-- Topic content -->
+  <div v-else>
+    <!-- Knowledge Map (default) — VitePress style: h1 outside prose, content flows naturally -->
+    <template v-if="showKnowledgeMap">
+      <h1
+        class="text-[28px] md:text-[32px] font-semibold tracking-[-0.02em] leading-10 text-(--color-ink) mb-6"
+      >
+        {{ state.topic }}
+      </h1>
+      <div class="prose-content" v-html="knowledgeMapHtml" />
+    </template>
+
+    <!-- File content -->
+    <ContentViewer v-else :file="selectedFile" />
   </div>
 </template>
 `,
-  '.vitepress/theme/composables/useI18n.ts': `import { ref } from 'vue';
+  'src/composables/useI18n.ts': `import { ref } from 'vue';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -710,20 +775,28 @@ export type I18nKey =
   | 'dashboard.title'
   | 'dashboard.noTopics'
   | 'dashboard.startLearning'
+  | 'dashboard.topicCount'
   | 'topic.progress'
   | 'topic.domains'
   | 'topic.concepts'
   | 'topic.mastered'
+  | 'topic.notFound'
   | 'domain.notes'
   | 'domain.exercises'
   | 'domain.noNotes'
   | 'domain.noExercises'
   | 'domain.backToMap'
+  | 'domain.selectFile'
   | 'status.mastered'
   | 'status.inProgress'
   | 'status.needsPractice'
   | 'status.unexplored'
-  | 'lang.switch';
+  | 'sidebar.topics'
+  | 'sidebar.exercises'
+  | 'sidebar.noNotes'
+  | 'sidebar.noExercises'
+  | 'lang.switch'
+  | 'theme.switch';
 
 type Messages = Record<I18nKey, string>;
 
@@ -736,39 +809,55 @@ const messages: Record<Locale, Messages> = {
     'dashboard.title': 'Learning Dashboard',
     'dashboard.noTopics': 'No topics yet',
     'dashboard.startLearning': 'Run \`learn-anything init\` to start your first topic',
+    'dashboard.topicCount': '{count} {count, plural, one {topic} other {topics}}',
     'topic.progress': 'Progress',
     'topic.domains': 'Domains',
     'topic.concepts': 'Concepts',
     'topic.mastered': 'Mastered',
+    'topic.notFound': 'Topic not found',
     'domain.notes': 'Notes',
     'domain.exercises': 'Exercises',
     'domain.noNotes': 'No session notes yet',
     'domain.noExercises': 'No exercises yet',
     'domain.backToMap': '← Back to Knowledge Map',
+    'domain.selectFile': 'Select a file to view its content',
     'status.mastered': 'Mastered',
     'status.inProgress': 'In Progress',
     'status.needsPractice': 'Needs Practice',
     'status.unexplored': 'Unexplored',
     'lang.switch': '中文',
+    'theme.switch': 'Toggle theme',
+    'sidebar.topics': 'Topics',
+    'sidebar.exercises': 'Exercises',
+    'sidebar.noNotes': 'No sessions',
+    'sidebar.noExercises': 'No exercises',
   },
   'zh-CN': {
     'dashboard.title': '学习仪表盘',
     'dashboard.noTopics': '暂无学习主题',
     'dashboard.startLearning': '运行 \`learn-anything init\` 开始你的第一个学习主题',
+    'dashboard.topicCount': '{count} 个主题',
     'topic.progress': '学习进度',
     'topic.domains': '知识域',
     'topic.concepts': '概念',
     'topic.mastered': '已掌握',
+    'topic.notFound': '未找到主题',
     'domain.notes': '笔记',
     'domain.exercises': '练习',
     'domain.noNotes': '暂无笔记',
     'domain.noExercises': '暂无练习',
     'domain.backToMap': '← 返回知识地图',
+    'domain.selectFile': '选择文件查看内容',
     'status.mastered': '已掌握',
     'status.inProgress': '学习中',
     'status.needsPractice': '需练习',
     'status.unexplored': '未探索',
     'lang.switch': 'English',
+    'theme.switch': '切换主题',
+    'sidebar.topics': '笔记',
+    'sidebar.exercises': '练习',
+    'sidebar.noNotes': '没有笔记',
+    'sidebar.noExercises': '没有练习',
   },
 };
 
@@ -777,6 +866,7 @@ const messages: Record<Locale, Messages> = {
 /* ------------------------------------------------------------------ */
 
 const STORAGE_KEY = 'learn-anything-locale';
+const THEME_KEY = 'learn-anything-theme';
 
 function detectLocale(): Locale {
   if (typeof localStorage === 'undefined') return 'en';
@@ -810,25 +900,44 @@ export function useI18n() {
     }
   };
 
-  return { locale, t, toggleLocale, setLocale };
+  const isDark = ref<boolean>(
+    typeof document !== 'undefined'
+      ? document.documentElement.classList.contains('dark')
+      : false,
+  );
+
+  const toggleDarkMode = (): void => {
+    const next = !isDark.value;
+    isDark.value = next;
+    document.documentElement.classList.toggle('dark', next);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(THEME_KEY, next ? 'dark' : 'light');
+    }
+  };
+
+  return { locale, t, toggleLocale, setLocale, isDark, toggleDarkMode };
 }
 `,
-  '.vitepress/theme/composables/useTopicData.ts': `/* ================================================================== */
+  'src/composables/useTopicData.ts': `/* ================================================================== */
 /*  useTopicData — Data access layer                                   */
 /*                                                                     */
 /*  Uses Vite's import.meta.glob to resolve files at build time.        */
 /*  All patterns are static string literals (required by Vite).         */
+/*                                                                     */
+/*  Performance: module-level indexes are built once at import time,    */
+/*  providing O(1) lookup for all public API functions. Computed         */
+/*  results are cached to avoid redundant object allocation.            */
+/*                                                                     */
+/*  Lazy loading: session & exercise content use lazy globs so file     */
+/*  contents are NOT bundled eagerly. Content is loaded on-demand via   */
+/*  dynamic import() when a file is selected.                           */
 /* ================================================================== */
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
 /* ------------------------------------------------------------------ */
 
-export type ConceptStatus =
-  | 'mastered'
-  | 'in_progress'
-  | 'needs_practice'
-  | 'unexplored';
+export type ConceptStatus = 'mastered' | 'in_progress' | 'needs_practice' | 'unexplored';
 
 export interface Concept {
   name: string;
@@ -866,12 +975,8 @@ export interface TopicSummary {
 }
 
 export interface SessionFile {
-  /** Display filename (e.g. "2026-06-11.md") */
   filename: string;
-  /** Glob key for looking up the Vue component module */
   path: string;
-  /** Raw markdown content */
-  content: string;
 }
 
 export interface ExerciseFile {
@@ -885,47 +990,82 @@ export interface ExerciseGroup {
   files: ExerciseFile[];
 }
 
+export interface SelectedFilePayload {
+  path: string;
+  content: string;
+  type: 'markdown' | 'code';
+}
+
 /* ------------------------------------------------------------------ */
 /*  Build-time glob imports                                            */
 /* ------------------------------------------------------------------ */
 
-// All topic state.json files (eager — loaded at import time)
-// Relative paths from this file's location (.vitepress/theme/composables/)
-const stateModules = import.meta.glob('../../../topics/*/state.json', {
-  eager: true,
-  import: 'default',
-}) as Record<string, StateV1>;
+// Eager: state.json & knowledge-map (small, always needed)
+// Production reads from site/topics, tests read from test/fixtures/topics
+const testStateGlob = import.meta.env.MODE === 'test'
+  ? import.meta.glob('../../../test/fixtures/topics/*/state.json', {
+      eager: true,
+      import: 'default',
+    })
+  : {};
 
-// All knowledge-map.md files (raw strings for rendering)
-const knowledgeMapModules = import.meta.glob('../../../topics/*/knowledge-map.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-}) as Record<string, string>;
+const stateModules = {
+  ...import.meta.glob('../../topics/*/state.json', {
+    eager: true,
+    import: 'default',
+  }),
+  ...testStateGlob,
+} as Record<string, StateV1>;
 
-// Session .md files — raw strings for listing + content
-const sessionRawModules = import.meta.glob(
-  '../../../topics/*/sessions/*/*.md',
-  { eager: true, query: '?raw', import: 'default' },
-) as Record<string, string>;
+const testKmGlob = import.meta.env.MODE === 'test'
+  ? import.meta.glob('../../../test/fixtures/topics/*/knowledge-map.md', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    })
+  : {};
 
-// Session .md files — Vue components for rendering (lazy)
-const sessionComponentModules = import.meta.glob(
-  '../../../topics/*/sessions/*/*.md',
-);
+const knowledgeMapModules = {
+  ...import.meta.glob('../../topics/*/knowledge-map.md', {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  }),
+  ...testKmGlob,
+} as Record<string, string>;
 
-// Exercise files — raw strings (README, code, practice records)
-const exerciseModules = import.meta.glob(
-  '../../../topics/*/exercises/**/*',
-  { eager: true, query: '?raw', import: 'default' },
-) as Record<string, string>;
+// Lazy: session & exercise content loaded on demand via dynamic import()
+const testSessionGlob = import.meta.env.MODE === 'test'
+  ? import.meta.glob('../../../test/fixtures/topics/*/sessions/*/*.md', {
+      query: '?raw',
+    })
+  : {};
+
+const sessionContentLoaders = {
+  ...import.meta.glob('../../topics/*/sessions/*/*.md', {
+    query: '?raw',
+  }),
+  ...testSessionGlob,
+} as Record<string, () => Promise<{ default: string }>>;
+
+const testExerciseGlob = import.meta.env.MODE === 'test'
+  ? import.meta.glob('../../../test/fixtures/topics/*/exercises/**/*', {
+      query: '?raw',
+    })
+  : {};
+
+const exerciseContentLoaders = {
+  ...import.meta.glob('../../topics/*/exercises/**/*', {
+    query: '?raw',
+  }),
+  ...testExerciseGlob,
+} as Record<string, () => Promise<{ default: string }>>;
 
 /* ------------------------------------------------------------------ */
 /*  Path helpers                                                      */
 /* ------------------------------------------------------------------ */
 
 function slugFromStatePath(path: string): string {
-  // ".../topics/javascript/state.json" → "javascript"
   const match = path.match(/\\/topics\\/([^/]+)\\/state\\.json$/);
   return match?.[1] || '';
 }
@@ -935,182 +1075,263 @@ function filenameFromPath(path: string): string {
   return parts[parts.length - 1] || '';
 }
 
-function conceptFromExercisePath(path: string): string {
-  // ".../topics/javascript/exercises/variables-data-types/README.md" → "variables-data-types"
-  const match = path.match(/\\/topics\\/[^/]+\\/exercises\\/([^/]+)\\//);
-  return match?.[1] || '';
-}
+/* ------------------------------------------------------------------ */
+/*  Module-level indexes (built once at import time, O(1) lookup)      */
+/* ------------------------------------------------------------------ */
+
+const stateBySlug = new Map<string, StateV1>();
+const knowledgeMapBySlug = new Map<string, string>();
+const sessionsBySlug = new Map<string, Map<string, SessionFile[]>>();
+const exerciseGroupsBySlug = new Map<string, ExerciseGroup[]>();
+
+let topicSummaryCache: TopicSummary[] | null = null;
+
+(function buildIndexes() {
+  /* --- States --- */
+  for (const [path, state] of Object.entries(stateModules)) {
+    const slug = slugFromStatePath(path);
+    if (slug) stateBySlug.set(slug, state);
+  }
+
+  /* --- Knowledge maps --- */
+  for (const [path, content] of Object.entries(knowledgeMapModules)) {
+    const match = path.match(/\\/topics\\/([^/]+)\\/knowledge-map\\.md$/);
+    if (match?.[1]) knowledgeMapBySlug.set(match[1], content);
+  }
+
+  /* --- Sessions: pre-grouped slug → domain → files (paths only, content lazy) --- */
+  for (const path of Object.keys(sessionContentLoaders)) {
+    if (!path.endsWith('.md')) continue;
+    const match = path.match(/\\/topics\\/([^/]+)\\/sessions\\/([^/]+)\\//);
+    if (!match) continue;
+    const [, slug, domain] = match;
+    if (!sessionsBySlug.has(slug)) sessionsBySlug.set(slug, new Map());
+    const domainMap = sessionsBySlug.get(slug)!;
+    if (!domainMap.has(domain)) domainMap.set(domain, []);
+    domainMap.get(domain)!.push({
+      filename: filenameFromPath(path),
+      path,
+    });
+  }
+  for (const domainMap of sessionsBySlug.values()) {
+    for (const files of domainMap.values()) {
+      files.sort((a, b) => b.filename.localeCompare(a.filename));
+    }
+  }
+
+  /* --- Exercises: pre-grouped slug → concept (paths only, content lazy) --- */
+  const namesBySlug = new Map<string, Map<string, string>>();
+  for (const [slug, state] of stateBySlug) {
+    const nameMap = new Map<string, string>();
+    for (const domain of state.domains) {
+      for (const concept of domain.concepts) {
+        nameMap.set(concept.slug, concept.name);
+      }
+    }
+    namesBySlug.set(slug, nameMap);
+  }
+
+  const raw: Record<string, Map<string, ExerciseFile[]>> = {};
+  for (const path of Object.keys(exerciseContentLoaders)) {
+    const match = path.match(/\\/topics\\/([^/]+)\\/exercises\\/([^/]+)\\//);
+    if (!match) continue;
+    const [, slug, concept] = match;
+    if (!raw[slug]) raw[slug] = new Map();
+    const conceptMap = raw[slug];
+    if (!conceptMap.has(concept)) conceptMap.set(concept, []);
+    conceptMap.get(concept)!.push({ name: filenameFromPath(path), path });
+  }
+
+  for (const [slug, conceptMap] of Object.entries(raw)) {
+    const names = namesBySlug.get(slug);
+    const groups: ExerciseGroup[] = [];
+    for (const [conceptSlug, files] of conceptMap) {
+      groups.push({
+        conceptSlug,
+        conceptName: names?.get(conceptSlug) || conceptSlug,
+        files,
+      });
+    }
+    groups.sort((a, b) => a.conceptName.localeCompare(b.conceptName));
+    exerciseGroupsBySlug.set(slug, groups);
+  }
+})();
 
 /* ------------------------------------------------------------------ */
 /*  Public API                                                        */
 /* ------------------------------------------------------------------ */
 
-/**
- * Lists all available topics with summary stats.
- * Scans all state.json files imported via glob.
- */
 export function listAllTopics(): TopicSummary[] {
-  return Object.entries(stateModules)
-    .map(([path, state]) => {
-      const slug = slugFromStatePath(path);
-      if (!slug || !state?.domains) return null;
+  if (topicSummaryCache) return topicSummaryCache;
 
-      const allConcepts = state.domains.flatMap((d) => d.concepts);
-      const total = allConcepts.length;
-      const mastered = allConcepts.filter((c) => c.status === 'mastered').length;
+  const summaries: TopicSummary[] = [];
+  for (const [slug, state] of stateBySlug) {
+    const allConcepts = state.domains.flatMap((d) => d.concepts);
+    const total = allConcepts.length;
+    const mastered = allConcepts.filter((c) => c.status === 'mastered').length;
 
-      return {
-        slug,
-        name: state.topic || slug,
-        domainCount: state.domains.length,
-        totalConcepts: total,
-        masteredCount: mastered,
-        percentage: total > 0 ? Math.round((mastered / total) * 100) : 0,
-      } satisfies TopicSummary;
-    })
-    .filter((t): t is TopicSummary => t !== null)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    summaries.push({
+      slug,
+      name: state.topic || slug,
+      domainCount: state.domains.length,
+      totalConcepts: total,
+      masteredCount: mastered,
+      percentage: total > 0 ? Math.round((mastered / total) * 100) : 0,
+    } satisfies TopicSummary);
+  }
+
+  summaries.sort((a, b) => a.name.localeCompare(b.name));
+  topicSummaryCache = summaries;
+  return topicSummaryCache;
 }
 
-/**
- * Loads the full state.json data for a single topic.
- * Finds the key by matching the slug in the glob key paths.
- */
 export function loadTopic(slug: string): StateV1 | null {
-  for (const [path, state] of Object.entries(stateModules)) {
-    if (slugFromStatePath(path) === slug) return state;
-  }
-  return null;
+  return stateBySlug.get(slug) ?? null;
 }
 
-/**
- * Loads the raw knowledge-map.md content for a topic.
- */
 export function loadKnowledgeMap(slug: string): string | null {
-  for (const [path, content] of Object.entries(knowledgeMapModules)) {
-    const match = path.match(/\\/topics\\/([^/]+)\\/knowledge-map\\.md$/);
-    if (match?.[1] === slug) return content;
-  }
-  return null;
+  return knowledgeMapBySlug.get(slug) ?? null;
 }
 
-/**
- * Lists session note files for a given topic and domain.
- * Returns files sorted by filename (date descending).
- */
 export function scanSessions(slug: string, domain: string): SessionFile[] {
-  const marker = \`/topics/\${slug}/sessions/\${domain}/\`;
-
-  return Object.entries(sessionRawModules)
-    .filter(([path]) => path.includes(marker) && path.endsWith('.md'))
-    .map(([path, content]) => ({
-      filename: filenameFromPath(path),
-      path,
-      content,
-    }))
-    .sort((a, b) => b.filename.localeCompare(a.filename)); // date descending
+  return sessionsBySlug.get(slug)?.get(domain) ?? [];
 }
 
-/**
- * Returns a lazy loader for a session markdown file's Vue component.
- * Usage: \`const comp = await loadSessionComponent(path)\`
- */
-export function loadSessionComponent(
-  path: string,
-): (() => Promise<unknown>) | null {
-  return sessionComponentModules[path] ?? null;
-}
-
-/**
- * Scans exercise files grouped by concept for a given topic.
- */
 export function scanExercises(slug: string): ExerciseGroup[] {
-  const marker = \`/topics/\${slug}/exercises/\`;
-  const state = loadTopic(slug);
-
-  // Build concept lookup: concept-slug → concept-name
-  const conceptNames: Record<string, string> = {};
-  if (state?.domains) {
-    for (const domain of state.domains) {
-      for (const concept of domain.concepts) {
-        conceptNames[concept.slug] = concept.name;
-      }
-    }
-  }
-
-  // Group files by concept-slug
-  const groups: Record<string, ExerciseFile[]> = {};
-
-  for (const path of Object.keys(exerciseModules)) {
-    if (!path.includes(marker)) continue;
-
-    const conceptSlug = conceptFromExercisePath(path);
-    if (!conceptSlug) continue;
-
-    if (!groups[conceptSlug]) {
-      groups[conceptSlug] = [];
-    }
-    groups[conceptSlug].push({
-      name: filenameFromPath(path),
-      path,
-    });
-  }
-
-  return Object.entries(groups)
-    .map(([conceptSlug, files]) => ({
-      conceptSlug,
-      conceptName: conceptNames[conceptSlug] || conceptSlug,
-      files,
-    }))
-    .sort((a, b) => a.conceptName.localeCompare(b.conceptName));
+  return exerciseGroupsBySlug.get(slug) ?? [];
 }
 
-/**
- * Loads the raw content of an exercise file.
- */
-export function loadExerciseContent(path: string): string | null {
-  return exerciseModules[path] ?? null;
+export async function loadSessionContent(path: string): Promise<string | null> {
+  const loader = sessionContentLoaders[path];
+  if (!loader) return null;
+  const mod = await loader();
+  return (mod as { default: string }).default;
 }
 
-/**
- * Loads the raw content of a session file.
- */
-export function loadMarkdown(path: string): string | null {
-  return sessionRawModules[path] ?? null;
+export async function loadExerciseContent(path: string): Promise<string | null> {
+  const loader = exerciseContentLoaders[path];
+  if (!loader) return null;
+  const mod = await loader();
+  return (mod as { default: string }).default;
 }
 `,
-  '.vitepress/theme/index.ts': `import type { Theme } from 'vitepress';
-import DefaultTheme from 'vitepress/theme';
-import Layout from './components/Layout.vue';
-import Dashboard from './components/Dashboard.vue';
-import TopicCard from './components/TopicCard.vue';
-import TopicPage from './components/TopicPage.vue';
-import DomainPage from './components/DomainPage.vue';
-import SessionNotes from './components/SessionNotes.vue';
-import ExerciseView from './components/ExerciseView.vue';
-import ProgressBar from './components/ProgressBar.vue';
-import StatusIcon from './components/StatusIcon.vue';
-import LanguageSwitch from './components/LanguageSwitch.vue';
-import './styles/custom.css';
+  'src/main.ts': `import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router';
+import './styles/main.css';
 
-export default {
-  extends: DefaultTheme,
-  Layout,
-  enhanceApp({ app }) {
-    app.component('Dashboard', Dashboard);
-    app.component('TopicCard', TopicCard);
-    app.component('TopicPage', TopicPage);
-    app.component('DomainPage', DomainPage);
-    app.component('SessionNotes', SessionNotes);
-    app.component('ExerciseView', ExerciseView);
-    app.component('ProgressBar', ProgressBar);
-    app.component('StatusIcon', StatusIcon);
-    app.component('LanguageSwitch', LanguageSwitch);
+const app = createApp(App);
+app.use(router);
+app.mount('#app');
+`,
+  'src/router/index.ts': `import { createRouter, createWebHistory } from 'vue-router';
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      name: 'dashboard',
+      component: () => import('../components/Dashboard.vue'),
+    },
+    {
+      path: '/topics/:slug',
+      name: 'topic',
+      component: () => import('../components/TopicPage.vue'),
+      props: true,
+    },
+  ],
+  scrollBehavior() {
+    return { top: 0 };
   },
-} satisfies Theme;
+});
+
+export default router;
 `,
-  '.vitepress/theme/styles/custom.css': `/* ================================================================== */
-/*  Learn Anything — VitePress Custom Styles                           */
+  'src/styles/code.css': `/* ================================================================== */
+/*  Syntax Highlighting Theme                                           */
+/*  Uses the project's design tokens for a cohesive look                */
+/* ================================================================== */
+
+/* Shared with highlight.js light/dark modes via CSS custom properties */
+
+.hljs {
+  color: var(--color-ink);
+  background: var(--color-code-bg);
+}
+
+/* Keywords */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: #9b3eb0;
+}
+
+/* Strings */
+.hljs-string,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-addition {
+  color: #3d8b5e;
+}
+
+/* Numbers / constants */
+.hljs-number,
+.hljs-meta .hljs-string,
+.hljs-regexp {
+  color: #d94e34;
+}
+
+/* Built-ins */
+.hljs-built_in,
+.hljs-title.function_,
+.hljs-type {
+  color: #3b6fb6;
+}
+
+/* Comments */
+.hljs-comment,
+.hljs-quote {
+  color: var(--color-pencil);
+  font-style: italic;
+}
+
+/* Tags / attributes */
+.hljs-tag,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: #d94e34;
+}
+
+.hljs-attr,
+.hljs-attribute {
+  color: #d9a34a;
+}
+
+/* Emphasis */
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}
+
+/* Deletion / diff */
+.hljs-deletion {
+  color: #d94e34;
+  background: rgba(217, 78, 52, 0.1);
+}
+
+.hljs-addition {
+  color: #3d8b5e;
+  background: rgba(61, 139, 94, 0.1);
+}`,
+  'src/styles/main.css': `/* ================================================================== */
+/*  Learn Anything — "The Annotated Notebook" Design Tokens             */
+/*  Tailwind v4 @theme configuration                                    */
 /* ================================================================== */
 
 @import "tailwindcss";
@@ -1119,124 +1340,586 @@ export default {
 /*  Tailwind class sources                                             */
 /* ------------------------------------------------------------------ */
 
-@source "../components/**/*.vue";
-@source "../composables/**/*.ts";
-`,
-  'env.d.ts': `/// <reference types="vitepress/client" />
+@source "../**/*.vue";
+@source "../**/*.ts";
 
-declare module '*.vue' {
-  import type { DefineComponent } from 'vue';
-  const component: DefineComponent<object, object, unknown>;
-  export default component;
+/* ------------------------------------------------------------------ */
+/*  Dark mode — class-based (dark class on <html>)                     */
+/* ------------------------------------------------------------------ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/*  Design tokens                                                      */
+/* ------------------------------------------------------------------ */
+
+@theme {
+  /* --- Typography --- */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system,
+    "PingFang SC", "Noto Sans SC", "Microsoft YaHei",
+    sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Fira Code", "JetBrains Mono",
+    "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+
+  /* --- Font sizes (VitePress scale) --- */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.75;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.5rem;
+
+  /* --- Font weights (VitePress uses 400/500/600/700) --- */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* --- Text hierarchy — VitePress style --- */
+  --color-text-1: #3c3c43;
+  --color-text-2: #67676c;
+  --color-text-3: #929295;
+  --color-text-1-rgb: 60 60 67;
+
+  /* --- Background hierarchy — VitePress style --- */
+  --color-bg: #ffffff;
+  --color-bg-alt: #f6f6f7;
+  --color-bg-soft: #f6f6f7;
+  --color-bg-elv: #ffffff;
+
+  /* --- Borders / dividers — VitePress style --- */
+  --color-border: #c2c2c4;
+  --color-divider: #e2e2e3;
+  --color-gutter: #e2e2e3;
+
+  /* --- Accent: the red pen (replaces VitePress indigo) --- */
+  --color-brand-1: #cc4428;
+  --color-brand-2: #d94e34;
+  --color-brand-3: #e0604a;
+  --color-brand-soft: rgba(217 78 52 / 0.14);
+
+  /* --- Status colors --- */
+  --color-mastered: #18794e;
+  --color-progress: #915930;
+
+  /* --- Code --- */
+  --color-code-bg: var(--color-bg-alt);
+
+  /* --- Radius --- */
+  --radius-card: 12px;
+  --radius-sm: 4px;
 }
 
-declare module '*.md' {
-  import type { DefineComponent } from 'vue';
-  const component: DefineComponent<object, object, unknown>;
-  export default component;
+/* ------------------------------------------------------------------ */
+/*  Dark mode overrides — VitePress dark theme                         */
+/* ------------------------------------------------------------------ */
+
+.dark {
+  --color-text-1: #dfdfd6;
+  --color-text-2: #98989f;
+  --color-text-3: #6a6a71;
+  --color-text-1-rgb: 223 223 214;
+
+  --color-bg: #1b1b1f;
+  --color-bg-alt: #161618;
+  --color-bg-soft: #202127;
+  --color-bg-elv: #202127;
+
+  --color-border: #3c3f44;
+  --color-divider: #2e2e32;
+  --color-gutter: #000000;
+
+  --color-brand-1: #f0705a;
+  --color-brand-2: #e85d44;
+  --color-brand-3: #d94e34;
+  --color-brand-soft: rgba(232 93 68 / 0.16);
+
+  --color-mastered: #3dd68c;
+  --color-progress: #f9b44e;
 }
-`,
-  'package.json': `{
-  "name": "learn-anything-site",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vitepress dev",
-    "build": "vitepress build",
-    "preview": "vitepress preview"
-  },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.3.1",
-    "tailwindcss": "^4.3.1",
-    "vitepress": "^1.6.4",
-    "vue": "^3.5.38"
+
+/* ------------------------------------------------------------------ */
+/*  Convenience token aliases (keep old names for compatibility)        */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --color-page: var(--color-bg);
+  --color-ink: var(--color-text-1);
+  --color-pencil: var(--color-text-2);
+  --color-rule: var(--color-divider);
+  --color-surface: var(--color-bg-soft);
+  --color-surface-hover: var(--color-bg-alt);
+  --color-accent: var(--color-brand-2);
+  --color-accent-soft: var(--color-brand-soft);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Base element styles                                                */
+/* ------------------------------------------------------------------ */
+
+body {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-normal);
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  color: var(--color-text-1);
+  background-color: var(--color-bg);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings — VitePress uses 600 weight, not 700 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
+  outline: none;
+}
+
+h1 {
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  line-height: 40px;
+}
+
+h2 {
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  line-height: 32px;
+}
+
+h3 {
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  line-height: 28px;
+}
+
+/* Code */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+pre {
+  font-family: var(--font-mono);
+}
+
+pre code {
+  font-size: 0.875rem;
+}
+
+/* Links */
+a:not([class]) {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:not([class]):hover {
+  text-decoration: underline;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-accent-soft);
+}
+
+/* ================================================================== */
+/*  Prose / Markdown content — modelled on VitePress vp-doc.css        */
+/* ================================================================== */
+
+.prose-content {
+  max-width: 56rem;
+  /* ~688px — matches VitePress */
+  margin: 0 auto;
+  line-height: 28px;
+  color: var(--color-ink);
+}
+
+/* ---- Headings ---- */
+
+.prose-content h1,
+.prose-content h2,
+.prose-content h3,
+.prose-content h4,
+.prose-content h5,
+.prose-content h6 {
+  position: relative;
+  font-weight: 600;
+  outline: none;
+}
+
+.prose-content h1 {
+  letter-spacing: -0.02em;
+  line-height: 40px;
+  font-size: 28px;
+}
+
+.prose-content h2 {
+  margin: 48px 0 16px;
+  border-top: 1px solid var(--color-rule);
+  padding-top: 24px;
+  letter-spacing: -0.02em;
+  line-height: 32px;
+  font-size: 24px;
+}
+
+.prose-content h3 {
+  margin: 32px 0 0;
+  letter-spacing: -0.01em;
+  line-height: 28px;
+  font-size: 20px;
+}
+
+.prose-content h4 {
+  margin: 24px 0 0;
+  letter-spacing: -0.01em;
+  line-height: 24px;
+  font-size: 18px;
+}
+
+@media (min-width: 768px) {
+  .prose-content h1 {
+    font-size: 32px;
   }
 }
-`,
-  'pages/index.md': `---
-layout: home
----
 
-<script setup>
-</script>
+/* ---- Paragraph & inline ---- */
 
-<Dashboard />
-`,
-  'pages/topics/[slug].md': `<script setup>
-</script>
+.prose-content p,
+.prose-content img,
+.prose-content summary {
+  margin: 16px 0;
+}
 
-<TopicPage :slug="$params.slug" />
-`,
-  'pages/topics/[slug].paths.js': `import { readdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+.prose-content p {
+  line-height: 28px;
+}
 
-export default {
-  paths() {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const topicsDir = join(__dirname, '..', '..', 'topics');
+.prose-content strong {
+  font-weight: 600;
+}
 
-    if (!existsSync(topicsDir)) return [];
+.prose-content a {
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.25s;
+}
 
-    return readdirSync(topicsDir, { withFileTypes: true })
-      .filter(
-        (d) =>
-          d.isDirectory() &&
-          existsSync(join(topicsDir, d.name, 'state.json')),
-      )
-      .map((d) => ({ params: { slug: d.name } }));
-  },
-};
-`,
-  'pages/topics/[slug]/[domain].md': `<script setup>
-</script>
+.prose-content a:hover {
+  color: var(--color-ink);
+}
 
-<DomainPage :slug="$params.slug" :domain="$params.domain" />
-`,
-  'pages/topics/[slug]/[domain].paths.js': `import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+/* ---- Blockquote ---- */
 
-export default {
-  paths() {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const topicsDir = join(__dirname, '..', '..', '..', 'topics');
+.prose-content blockquote {
+  margin: 16px 0;
+  border-left: 2px solid var(--color-rule);
+  padding-left: 16px;
+  color: var(--color-pencil);
+  transition: border-color 0.5s;
+}
 
-    if (!existsSync(topicsDir)) return [];
+.prose-content blockquote>p {
+  margin: 0;
+  font-size: 16px;
+}
 
-    const paths = [];
+/* ---- Lists ---- */
 
-    // List all topics from topics/
-    const topicDirs = readdirSync(topicsDir, { withFileTypes: true }).filter(
-      (d) =>
-        d.isDirectory() &&
-        existsSync(join(topicsDir, d.name, 'state.json')),
-    );
+.prose-content ul,
+.prose-content ol {
+  padding-left: 1.25rem;
+  margin: 16px 0;
+}
 
-    for (const topicDir of topicDirs) {
-      const slug = topicDir.name;
-      const statePath = join(topicsDir, slug, 'state.json');
+.prose-content ul {
+  list-style: disc;
+}
 
+.prose-content ol {
+  list-style: decimal;
+}
+
+.prose-content li+li {
+  margin-top: 8px;
+}
+
+.prose-content li>ol,
+.prose-content li>ul {
+  margin: 8px 0 0;
+}
+
+/* ---- Horizontal rule ---- */
+
+.prose-content hr {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid var(--color-rule);
+}
+
+/* ---- Tables ---- */
+
+.prose-content table {
+  display: block;
+  border-collapse: collapse;
+  margin: 20px 0;
+  overflow-x: auto;
+  font-size: 14px;
+}
+
+.prose-content tr {
+  background-color: var(--color-page);
+  border-top: 1px solid var(--color-rule);
+}
+
+.prose-content tr:nth-child(2n) {
+  background-color: var(--color-surface);
+}
+
+.prose-content th,
+.prose-content td {
+  border: 1px solid var(--color-rule);
+  padding: 8px 16px;
+}
+
+.prose-content th {
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-pencil);
+  background-color: var(--color-surface);
+}
+
+.prose-content td {
+  font-size: 14px;
+}
+
+/* ---- Inline code ---- */
+
+.prose-content :not(pre, h1, h2, h3, h4, h5, h6)>code {
+  font-size: 0.875em;
+  color: var(--color-accent);
+}
+
+.prose-content :not(pre)>code {
+  border-radius: 4px;
+  padding: 3px 6px;
+  background-color: var(--color-code-bg);
+  font-family: var(--font-mono);
+  transition: color 0.25s, background-color 0.5s;
+}
+
+.prose-content a>code {
+  color: var(--color-accent);
+}
+
+.prose-content a:hover>code {
+  color: var(--color-ink);
+}
+
+.prose-content h1>code,
+.prose-content h2>code,
+.prose-content h3>code,
+.prose-content h4>code {
+  font-size: 0.9em;
+}
+
+/* ---- Code blocks ---- */
+
+.prose-content div[class*='language-'],
+.prose-content pre:has(code) {
+  position: relative;
+  margin: 16px -24px;
+  background-color: var(--color-code-bg);
+  overflow-x: auto;
+  transition: background-color 0.5s;
+}
+
+@media (min-width: 640px) {
+
+  .prose-content div[class*='language-'],
+  .prose-content pre:has(code) {
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+}
+
+.prose-content [class*='language-'] pre,
+.prose-content [class*='language-'] code,
+.prose-content pre:has(code) {
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+}
+
+.prose-content [class*='language-'] pre,
+.prose-content pre:has(code) {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 20px 0;
+  background: transparent;
+  overflow-x: auto;
+  text-align: left;
+}
+
+.prose-content [class*='language-'] code,
+.prose-content pre:has(code)>code {
+  display: block;
+  padding: 0 24px;
+  width: fit-content;
+  min-width: 100%;
+  line-height: 1.7;
+  font-size: 0.875em;
+  color: var(--color-ink);
+  background: transparent;
+  font-family: var(--font-mono);
+  transition: color 0.5s;
+}
+
+/* ---- First / last child spacing ---- */
+
+.prose-content>*:first-child {
+  margin-top: 0;
+}
+
+.prose-content>*:last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Reduced motion                                                    */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}`,
+  'src/utils/markdown.ts': `import MarkdownIt from 'markdown-it';
+import hljs from 'highlight.js';
+import '../styles/code.css';
+
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: false,
+  highlight(str: string, lang: string): string {
+    if (lang && hljs.getLanguage(lang)) {
       try {
-        const raw = readFileSync(statePath, 'utf-8');
-        const state = JSON.parse(raw);
-
-        if (state.domains && Array.isArray(state.domains)) {
-          for (const domain of state.domains) {
-            if (domain.slug) {
-              paths.push({ params: { slug, domain: domain.slug } });
-            }
-          }
-        }
+        return (
+          '<pre><code class="hljs language-' +
+          lang +
+          '">' +
+          hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+          '</code></pre>'
+        );
       } catch {
-        // Skip malformed state.json
+        // fall through
       }
     }
-
-    return paths;
+    // Auto-detect if no language specified
+    try {
+      const result = hljs.highlightAuto(str);
+      return '<pre><code class="hljs">' + result.value + '</code></pre>';
+    } catch {
+      return '<pre><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+    }
   },
-};
+});
+
+/**
+ * Renders a Markdown string to HTML.
+ */
+export function renderMarkdown(src: string): string {
+  return md.render(src);
+}
+
+/**
+ * Highlights raw code with syntax highlighting.
+ * Accepts a language name (or file extension) and returns HTML.
+ */
+export function highlightCode(code: string, lang: string): string {
+  // Map file extensions to language names
+  const langMap: Record<string, string> = {
+    js: 'javascript',
+    ts: 'typescript',
+    jsx: 'javascript',
+    tsx: 'typescript',
+    py: 'python',
+    rb: 'ruby',
+    rs: 'rust',
+    go: 'go',
+    java: 'java',
+    sh: 'bash',
+    yml: 'yaml',
+    toml: 'toml',
+    sql: 'sql',
+    json: 'json',
+    css: 'css',
+    html: 'html',
+    md: 'markdown',
+  };
+
+  const resolvedLang = langMap[lang] || lang;
+
+  if (hljs.getLanguage(resolvedLang)) {
+    try {
+      return hljs.highlight(code, { language: resolvedLang, ignoreIllegals: true }).value;
+    } catch {
+      // fall through
+    }
+  }
+
+  // Auto-detect
+  try {
+    return hljs.highlightAuto(code).value;
+  } catch {
+    return md.utils.escapeHtml(code);
+  }
+}
+
+/**
+ * Gets the file extension from a path.
+ */
+export function getFileExtension(path: string): string {
+  const parts = path.split('.');
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+}
+
+/**
+ * Checks if a file is a markdown file.
+ */
+export function isMarkdownFile(path: string): boolean {
+  return /\\.md$/i.test(path);
+}
 `,
   'tsconfig.json': `{
   "extends": "../../../tsconfig.base.json",
@@ -1245,8 +1928,6 @@ export default {
     "moduleResolution": "bundler",
     "jsx": "preserve",
     "rootDir": ".",
-    "outDir": "./.vitepress/dist",
-    "types": ["vitepress/client"],
     "paths": {
       "@data/*": ["./topics/*"]
     },
@@ -1255,17 +1936,31 @@ export default {
   },
   "include": [
     "env.d.ts",
-    ".vitepress/**/*.ts",
-    ".vitepress/**/*.mts",
-    ".vitepress/**/*.vue",
-    "pages/**/*.md",
-    "pages/**/*.js"
+    "src/**/*.ts",
+    "src/**/*.vue"
   ],
-  "exclude": [
-    "node_modules",
-    ".vitepress/dist",
-    ".vitepress/cache"
-  ]
+  "exclude": ["node_modules", "dist"]
 }
+`,
+  'vite.config.ts': `import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  plugins: [vue(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@data': resolve(__dirname, 'topics'),
+    },
+  },
+  server: {
+    host: true,
+    port: 5173,
+  },
+});
 `,
 };
