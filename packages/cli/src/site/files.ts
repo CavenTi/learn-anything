@@ -447,6 +447,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from '../../composables/useI18n';
 import {
   scanExercises,
+  scanRootExercises,
   loadExerciseContent,
 } from '../../composables/useTopicData';
 import type { ExerciseGroup, ExerciseFile } from '../../composables/useTopicData';
@@ -465,6 +466,8 @@ const { t } = useI18n();
 const expandedConcepts = ref<Set<string>>(new Set());
 
 const exerciseGroups = computed<ExerciseGroup[]>(() => scanExercises(props.topicSlug));
+
+const rootExercises = computed<ExerciseFile[]>(() => scanRootExercises(props.topicSlug));
 
 watch(
   () => props.topicSlug,
@@ -522,7 +525,18 @@ async function selectExerciseFile(file: ExerciseFile) {
       </div>
     </div>
 
-    <div v-else class="py-2 text-xs text-text-3">
+    <div v-if="rootExercises.length > 0" class="pt-2 mb-1 space-y-px">
+      <button
+        v-for="file in rootExercises"
+        :key="file.path"
+        class="block w-full text-left py-1 text-xs text-text-2 hover:text-text-1 transition-colors cursor-pointer truncate font-mono"
+        @click="selectExerciseFile(file)"
+      >
+        {{ file.name }}
+      </button>
+    </div>
+
+    <div v-if="exerciseGroups.length === 0 && rootExercises.length === 0" class="py-2 text-xs text-text-3">
       {{ t('sidebar.noExercises') }}
     </div>
   </nav>
@@ -607,6 +621,7 @@ import { useI18n } from '../../composables/useI18n';
 import {
   loadTopic,
   scanSessions,
+  scanRootSessions,
   loadSessionContent,
 } from '../../composables/useTopicData';
 import type { Domain, SessionFile } from '../../composables/useTopicData';
@@ -638,6 +653,8 @@ const domainSessions = computed<DomainWithSessions[]>(() => {
     sessions: scanSessions(props.topicSlug, domain.slug),
   }));
 });
+
+const rootSessions = computed<SessionFile[]>(() => scanRootSessions(props.topicSlug));
 
 watch(
   () => props.topicSlug,
@@ -707,7 +724,18 @@ async function selectSessionFile(file: SessionFile) {
       </div>
     </div>
 
-    <div v-else class="py-2 text-xs text-text-3">
+    <div v-if="rootSessions.length > 0" class="pt-2 mb-1 space-y-px">
+      <button
+        v-for="file in rootSessions"
+        :key="file.path"
+        class="block w-full text-left py-1 text-xs text-text-2 hover:text-text-1 transition-colors cursor-pointer truncate font-medium"
+        @click="selectSessionFile(file)"
+      >
+        {{ file.filename }}
+      </button>
+    </div>
+
+    <div v-if="domainSessions.length === 0 && rootSessions.length === 0" class="py-2 text-xs text-text-3">
       {{ t('sidebar.noNotes') }}
     </div>
   </nav>
@@ -1038,13 +1066,21 @@ const knowledgeMapModules = {
 // Lazy: session & exercise content loaded on demand via dynamic import()
 const testSessionGlob =
   import.meta.env.MODE === 'test'
-    ? import.meta.glob('../../../test/fixtures/topics/*/sessions/*/*.md', {
-        query: '?raw',
-      })
+    ? {
+        ...import.meta.glob('../../../test/fixtures/topics/*/sessions/*/*.md', {
+          query: '?raw',
+        }),
+        ...import.meta.glob('../../../test/fixtures/topics/*/sessions/*.md', {
+          query: '?raw',
+        }),
+      }
     : {};
 
 const sessionContentLoaders = {
   ...import.meta.glob('../../../topics/*/sessions/*/*.md', {
+    query: '?raw',
+  }),
+  ...import.meta.glob('../../../topics/*/sessions/*.md', {
     query: '?raw',
   }),
   ...testSessionGlob,
@@ -1086,6 +1122,8 @@ const stateBySlug = new Map<string, StateV1>();
 const knowledgeMapBySlug = new Map<string, string>();
 const sessionsBySlug = new Map<string, Map<string, SessionFile[]>>();
 const exerciseGroupsBySlug = new Map<string, ExerciseGroup[]>();
+const orphanSessionsBySlug = new Map<string, SessionFile[]>();
+const orphanExercisesBySlug = new Map<string, ExerciseFile[]>();
 
 let topicSummaryCache: TopicSummary[] | null = null;
 
@@ -1105,21 +1143,35 @@ let topicSummaryCache: TopicSummary[] | null = null;
   /* --- Sessions: pre-grouped slug → domain → files (paths only, content lazy) --- */
   for (const path of Object.keys(sessionContentLoaders)) {
     if (!path.endsWith('.md')) continue;
-    const match = path.match(/\\/topics\\/([^/]+)\\/sessions\\/([^/]+)\\//);
-    if (!match) continue;
-    const [, slug, domain] = match;
-    if (!sessionsBySlug.has(slug)) sessionsBySlug.set(slug, new Map());
-    const domainMap = sessionsBySlug.get(slug)!;
-    if (!domainMap.has(domain)) domainMap.set(domain, []);
-    domainMap.get(domain)!.push({
-      filename: filenameFromPath(path),
-      path,
-    });
+    const domainMatch = path.match(/\\/topics\\/([^/]+)\\/sessions\\/([^/]+)\\//);
+    if (domainMatch) {
+      const [, slug, domain] = domainMatch;
+      if (!sessionsBySlug.has(slug)) sessionsBySlug.set(slug, new Map());
+      const domainMap = sessionsBySlug.get(slug)!;
+      if (!domainMap.has(domain)) domainMap.set(domain, []);
+      domainMap.get(domain)!.push({
+        filename: filenameFromPath(path),
+        path,
+      });
+      continue;
+    }
+    const rootMatch = path.match(/\\/topics\\/([^/]+)\\/sessions\\/([^/]+\\.md)$/);
+    if (rootMatch) {
+      const [, slug] = rootMatch;
+      if (!orphanSessionsBySlug.has(slug)) orphanSessionsBySlug.set(slug, []);
+      orphanSessionsBySlug.get(slug)!.push({
+        filename: filenameFromPath(path),
+        path,
+      });
+    }
   }
   for (const domainMap of sessionsBySlug.values()) {
     for (const files of domainMap.values()) {
       files.sort((a, b) => b.filename.localeCompare(a.filename));
     }
+  }
+  for (const files of orphanSessionsBySlug.values()) {
+    files.sort((a, b) => b.filename.localeCompare(a.filename));
   }
 
   /* --- Exercises: pre-grouped slug → concept (paths only, content lazy) --- */
@@ -1136,13 +1188,21 @@ let topicSummaryCache: TopicSummary[] | null = null;
 
   const raw: Record<string, Map<string, ExerciseFile[]>> = {};
   for (const path of Object.keys(exerciseContentLoaders)) {
-    const match = path.match(/\\/topics\\/([^/]+)\\/exercises\\/([^/]+)\\//);
-    if (!match) continue;
-    const [, slug, concept] = match;
-    if (!raw[slug]) raw[slug] = new Map();
-    const conceptMap = raw[slug];
-    if (!conceptMap.has(concept)) conceptMap.set(concept, []);
-    conceptMap.get(concept)!.push({ name: filenameFromPath(path), path });
+    const conceptMatch = path.match(/\\/topics\\/([^/]+)\\/exercises\\/([^/]+)\\//);
+    if (conceptMatch) {
+      const [, slug, concept] = conceptMatch;
+      if (!raw[slug]) raw[slug] = new Map();
+      const conceptMap = raw[slug];
+      if (!conceptMap.has(concept)) conceptMap.set(concept, []);
+      conceptMap.get(concept)!.push({ name: filenameFromPath(path), path });
+      continue;
+    }
+    const rootMatch = path.match(/\\/topics\\/([^/]+)\\/exercises\\/([^/]+)$/);
+    if (rootMatch) {
+      const [, slug] = rootMatch;
+      if (!orphanExercisesBySlug.has(slug)) orphanExercisesBySlug.set(slug, []);
+      orphanExercisesBySlug.get(slug)!.push({ name: filenameFromPath(path), path });
+    }
   }
 
   for (const [slug, conceptMap] of Object.entries(raw)) {
@@ -1202,6 +1262,14 @@ export function scanSessions(slug: string, domain: string): SessionFile[] {
 
 export function scanExercises(slug: string): ExerciseGroup[] {
   return exerciseGroupsBySlug.get(slug) ?? [];
+}
+
+export function scanRootSessions(slug: string): SessionFile[] {
+  return orphanSessionsBySlug.get(slug) ?? [];
+}
+
+export function scanRootExercises(slug: string): ExerciseFile[] {
+  return orphanExercisesBySlug.get(slug) ?? [];
 }
 
 export async function loadSessionContent(path: string): Promise<string | null> {
@@ -1991,6 +2059,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       port: 5173,
+      fs: {
+        allow: [resolve(__dirname, '../..'), resolve(__dirname, '../topics')],
+      },
     },
   };
 });
