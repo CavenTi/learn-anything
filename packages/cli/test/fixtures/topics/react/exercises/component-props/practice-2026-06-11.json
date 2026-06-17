@@ -1,0 +1,11 @@
+{
+  "concept": "component-props",
+  "date": "2026-06-11",
+  "score": 2,
+  "maxScore": 2,
+  "results": [
+    { "function": "Card", "passed": true },
+    { "function": "UserProfile", "passed": true }
+  ],
+  "notes": "Straightforward. Remembered to use default props and conditional rendering with &&."
+}

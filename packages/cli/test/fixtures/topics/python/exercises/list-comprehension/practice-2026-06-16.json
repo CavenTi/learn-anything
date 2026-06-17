@@ -1,0 +1,13 @@
+{
+  "concept": "list-comprehension",
+  "date": "2026-06-16",
+  "score": 3,
+  "maxScore": 4,
+  "results": [
+    { "function": "squares", "passed": true },
+    { "function": "even_only", "passed": true },
+    { "function": "flatten", "passed": true },
+    { "function": "word_lengths", "passed": false }
+  ],
+  "notes": "Dict comprehension syntax tripped me up — used [] instead of {} initially."
+}

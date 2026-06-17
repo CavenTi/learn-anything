@@ -1,0 +1,81 @@
+/* ================================================================== */
+/*  Syntax Highlighting Theme                                           */
+/*  Uses the project's design tokens for a cohesive look                */
+/* ================================================================== */
+
+/* Shared with highlight.js light/dark modes via CSS custom properties */
+
+.hljs {
+  color: var(--color-ink);
+  background: var(--color-code-bg);
+}
+
+/* Keywords */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: #9b3eb0;
+}
+
+/* Strings */
+.hljs-string,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-addition {
+  color: #3d8b5e;
+}
+
+/* Numbers / constants */
+.hljs-number,
+.hljs-meta .hljs-string,
+.hljs-regexp {
+  color: #d94e34;
+}
+
+/* Built-ins */
+.hljs-built_in,
+.hljs-title.function_,
+.hljs-type {
+  color: #3b6fb6;
+}
+
+/* Comments */
+.hljs-comment,
+.hljs-quote {
+  color: var(--color-pencil);
+  font-style: italic;
+}
+
+/* Tags / attributes */
+.hljs-tag,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: #d94e34;
+}
+
+.hljs-attr,
+.hljs-attribute {
+  color: #d9a34a;
+}
+
+/* Emphasis */
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}
+
+/* Deletion / diff */
+.hljs-deletion {
+  color: #d94e34;
+  background: rgba(217, 78, 52, 0.1);
+}
+
+.hljs-addition {
+  color: #3d8b5e;
+  background: rgba(61, 139, 94, 0.1);
+}
