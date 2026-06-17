@@ -1010,7 +1010,7 @@ const testStateGlob =
     : {};
 
 const stateModules = {
-  ...import.meta.glob('../../topics/*/state.json', {
+  ...import.meta.glob('../../../topics/*/state.json', {
     eager: true,
     import: 'default',
   }),
@@ -1027,7 +1027,7 @@ const testKmGlob =
     : {};
 
 const knowledgeMapModules = {
-  ...import.meta.glob('../../topics/*/knowledge-map.md', {
+  ...import.meta.glob('../../../topics/*/knowledge-map.md', {
     eager: true,
     query: '?raw',
     import: 'default',
@@ -1044,7 +1044,7 @@ const testSessionGlob =
     : {};
 
 const sessionContentLoaders = {
-  ...import.meta.glob('../../topics/*/sessions/*/*.md', {
+  ...import.meta.glob('../../../topics/*/sessions/*/*.md', {
     query: '?raw',
   }),
   ...testSessionGlob,
@@ -1058,7 +1058,7 @@ const testExerciseGlob =
     : {};
 
 const exerciseContentLoaders = {
-  ...import.meta.glob('../../topics/*/exercises/**/*', {
+  ...import.meta.glob('../../../topics/*/exercises/**/*', {
     query: '?raw',
   }),
   ...testExerciseGlob,
@@ -1951,7 +1951,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const topicsDir =
-    mode === 'test' ? resolve(__dirname, '../test/fixtures/topics') : resolve(__dirname, 'topics');
+    mode === 'test' ? resolve(__dirname, '../test/fixtures/topics') : resolve(__dirname, '../topics');
 
   return {
     plugins: [
@@ -1975,7 +1975,7 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        '@data': resolve(__dirname, 'topics'),
+        '@data': resolve(__dirname, '../topics'),
       },
     },
     server: {

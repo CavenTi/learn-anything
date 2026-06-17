@@ -23,11 +23,11 @@ describe('SiteGenerator', () => {
   });
 
   describe('generate() — first generation', () => {
-    it('should write all SITE_FILES entries to .learn/', async () => {
+    it('should write all SITE_FILES entries to .learn/site/', async () => {
       const gen = new SiteGenerator({ targetPath: tmpDir });
       const written = await gen.generate();
 
-      const learnDir = path.join(tmpDir, '.learn');
+      const learnDir = path.join(tmpDir, '.learn', 'site');
       for (const [relPath] of Object.entries(SITE_FILES)) {
         const destPath = path.join(learnDir, relPath);
         expect(fs.existsSync(destPath), `Missing: ${relPath}`).toBe(true);
@@ -43,7 +43,7 @@ describe('SiteGenerator', () => {
       const written = await gen.generate();
 
       expect(written.length).toBeGreaterThan(0);
-      const learnDir = path.join(tmpDir, '.learn');
+      const learnDir = path.join(tmpDir, '.learn', 'site');
       expect(fs.existsSync(learnDir)).toBe(true);
     });
 
@@ -51,7 +51,7 @@ describe('SiteGenerator', () => {
       const gen = new SiteGenerator({ targetPath: tmpDir });
       await gen.generate();
 
-      const learnDir = path.join(tmpDir, '.learn');
+      const learnDir = path.join(tmpDir, '.learn', 'site');
       expect(fs.existsSync(path.join(learnDir, 'vite.config.ts'))).toBe(true);
       expect(fs.existsSync(path.join(learnDir, 'package.json'))).toBe(true);
       expect(fs.existsSync(path.join(learnDir, 'index.html'))).toBe(true);
@@ -62,7 +62,7 @@ describe('SiteGenerator', () => {
       const gen = new SiteGenerator({ targetPath: tmpDir });
       await gen.generate();
 
-      const learnDir = path.join(tmpDir, '.learn');
+      const learnDir = path.join(tmpDir, '.learn', 'site');
       expect(fs.existsSync(path.join(learnDir, 'src', 'main.ts'))).toBe(true);
       expect(fs.existsSync(path.join(learnDir, 'src', 'router', 'index.ts'))).toBe(true);
     });
@@ -71,7 +71,7 @@ describe('SiteGenerator', () => {
       const gen = new SiteGenerator({ targetPath: tmpDir });
       await gen.generate();
 
-      const gitignorePath = path.join(tmpDir, '.learn', '.gitignore');
+      const gitignorePath = path.join(tmpDir, '.learn', 'site', '.gitignore');
       const content = fs.readFileSync(gitignorePath, 'utf-8');
       expect(content).toContain('node_modules');
       expect(content).toContain('dist');
@@ -81,7 +81,7 @@ describe('SiteGenerator', () => {
       const gen = new SiteGenerator({ targetPath: tmpDir });
       await gen.generate();
 
-      const learnDir = path.join(tmpDir, '.learn');
+      const learnDir = path.join(tmpDir, '.learn', 'site');
       const srcDir = path.join(learnDir, 'src');
       expect(fs.existsSync(path.join(srcDir, 'components', 'Dashboard.vue'))).toBe(true);
       expect(fs.existsSync(path.join(srcDir, 'components', 'AppSidebar.vue'))).toBe(true);
@@ -97,7 +97,7 @@ describe('SiteGenerator', () => {
       const gen = new SiteGenerator({ targetPath: tmpDir });
       await gen.generate();
 
-      const sidebarDir = path.join(tmpDir, '.learn', 'src', 'components', 'sidebar');
+      const sidebarDir = path.join(tmpDir, '.learn', 'site', 'src', 'components', 'sidebar');
       expect(fs.existsSync(path.join(sidebarDir, 'SidebarDashboard.vue'))).toBe(true);
       expect(fs.existsSync(path.join(sidebarDir, 'SidebarExerciseTree.vue'))).toBe(true);
       expect(fs.existsSync(path.join(sidebarDir, 'SidebarTopicTree.vue'))).toBe(true);
@@ -109,7 +109,7 @@ describe('SiteGenerator', () => {
       const gen = new SiteGenerator({ targetPath: tmpDir });
       await gen.generate();
 
-      const learnDir = path.join(tmpDir, '.learn');
+      const learnDir = path.join(tmpDir, '.learn', 'site');
       // Spot-check a few files
       const pkgContent = fs.readFileSync(path.join(learnDir, 'package.json'), 'utf-8');
       // Type assertion: TS sees SITE_FILES['package.json'] as string (the type),
@@ -129,7 +129,7 @@ describe('SiteGenerator', () => {
       await gen1.generate();
 
       // Modify a theme file
-      const dashPath = path.join(tmpDir, '.learn', 'src', 'components', 'Dashboard.vue');
+      const dashPath = path.join(tmpDir, '.learn', 'site', 'src', 'components', 'Dashboard.vue');
       const modifiedContent = '/* user customization */\n' + fs.readFileSync(dashPath, 'utf-8');
       fs.writeFileSync(dashPath, modifiedContent, 'utf-8');
 
@@ -146,7 +146,14 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const composablePath = path.join(tmpDir, '.learn', 'src', 'composables', 'useI18n.ts');
+      const composablePath = path.join(
+        tmpDir,
+        '.learn',
+        'site',
+        'src',
+        'composables',
+        'useI18n.ts',
+      );
       const modified = '// modified\n';
       fs.writeFileSync(composablePath, modified, 'utf-8');
 
@@ -160,7 +167,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const stylePath = path.join(tmpDir, '.learn', 'src', 'styles', 'main.css');
+      const stylePath = path.join(tmpDir, '.learn', 'site', 'src', 'styles', 'main.css');
       const modified = '/* modified */\n';
       fs.writeFileSync(stylePath, modified, 'utf-8');
 
@@ -175,7 +182,7 @@ describe('SiteGenerator', () => {
       await gen1.generate();
 
       // Modify a config file
-      const vitePath = path.join(tmpDir, '.learn', 'vite.config.ts');
+      const vitePath = path.join(tmpDir, '.learn', 'site', 'vite.config.ts');
       const modified = '// old config\n';
       fs.writeFileSync(vitePath, modified, 'utf-8');
 
@@ -191,7 +198,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const pkgPath = path.join(tmpDir, '.learn', 'package.json');
+      const pkgPath = path.join(tmpDir, '.learn', 'site', 'package.json');
       fs.writeFileSync(pkgPath, '{"name": "old"}', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir });
@@ -206,7 +213,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const htmlPath = path.join(tmpDir, '.learn', 'index.html');
+      const htmlPath = path.join(tmpDir, '.learn', 'site', 'index.html');
       fs.writeFileSync(htmlPath, '<html></html>', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir });
@@ -220,7 +227,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const gitignorePath = path.join(tmpDir, '.learn', '.gitignore');
+      const gitignorePath = path.join(tmpDir, '.learn', 'site', '.gitignore');
       fs.writeFileSync(gitignorePath, 'custom-ignore\n', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir });
@@ -235,7 +242,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const mainPath = path.join(tmpDir, '.learn', 'src', 'main.ts');
+      const mainPath = path.join(tmpDir, '.learn', 'site', 'src', 'main.ts');
       fs.writeFileSync(mainPath, '// old main\n', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir });
@@ -249,7 +256,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const appPath = path.join(tmpDir, '.learn', 'src', 'App.vue');
+      const appPath = path.join(tmpDir, '.learn', 'site', 'src', 'App.vue');
       fs.writeFileSync(appPath, '// old App\n', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir });
@@ -265,7 +272,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const dashPath = path.join(tmpDir, '.learn', 'src', 'components', 'Dashboard.vue');
+      const dashPath = path.join(tmpDir, '.learn', 'site', 'src', 'components', 'Dashboard.vue');
       fs.writeFileSync(dashPath, '// modified\n', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir, force: true });
@@ -285,7 +292,7 @@ describe('SiteGenerator', () => {
       // List some theme files and modify them
       const themeFiles = Object.keys(SITE_FILES).filter(isThemePath);
       for (const relPath of themeFiles) {
-        fs.writeFileSync(path.join(tmpDir, '.learn', relPath), '// modified\n', 'utf-8');
+        fs.writeFileSync(path.join(tmpDir, '.learn', 'site', relPath), '// modified\n', 'utf-8');
       }
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir, force: true });
@@ -293,7 +300,7 @@ describe('SiteGenerator', () => {
 
       // All theme files should be restored
       for (const relPath of themeFiles) {
-        const content = fs.readFileSync(path.join(tmpDir, '.learn', relPath), 'utf-8');
+        const content = fs.readFileSync(path.join(tmpDir, '.learn', 'site', relPath), 'utf-8');
         expect(content).not.toBe('// modified\n');
         expect(content.length).toBeGreaterThan(10);
       }
@@ -303,7 +310,7 @@ describe('SiteGenerator', () => {
       const gen1 = new SiteGenerator({ targetPath: tmpDir });
       await gen1.generate();
 
-      const vitePath = path.join(tmpDir, '.learn', 'vite.config.ts');
+      const vitePath = path.join(tmpDir, '.learn', 'site', 'vite.config.ts');
       fs.writeFileSync(vitePath, '// old config\n', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir, force: true });
@@ -316,7 +323,7 @@ describe('SiteGenerator', () => {
 
   describe('generate() — .gitignore', () => {
     it('should always write .gitignore even if it already exists', async () => {
-      const learnDir = path.join(tmpDir, '.learn');
+      const learnDir = path.join(tmpDir, '.learn', 'site');
       fs.mkdirSync(learnDir, { recursive: true });
       fs.writeFileSync(path.join(learnDir, '.gitignore'), 'custom-content', 'utf-8');
 
@@ -407,7 +414,7 @@ describe('SiteGenerator', () => {
       await gen.generate();
 
       // Modify a theme file
-      const dashPath = path.join(tmpDir, '.learn', 'src', 'components', 'Dashboard.vue');
+      const dashPath = path.join(tmpDir, '.learn', 'site', 'src', 'components', 'Dashboard.vue');
       fs.writeFileSync(dashPath, '// modified\n', 'utf-8');
 
       const gen2 = new SiteGenerator({ targetPath: tmpDir });

@@ -1,4 +1,5 @@
 export const LEARN_DIR = '.learn';
+export const SITE_DIR = 'site';
 
 export interface AIToolOption {
   name: string;

@@ -3,7 +3,7 @@ import { spawn, execSync } from 'child_process';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import { SiteGenerator } from '../core/site-generator.js';
-import { LEARN_DIR } from '../core/config.js';
+import { LEARN_DIR, SITE_DIR } from '../core/config.js';
 import { getMessages } from '../i18n/index.js';
 import type { SupportedLocale } from '../i18n/types.js';
 
@@ -46,8 +46,7 @@ export async function executeServe(options: ServeOptions): Promise<void> {
   const cli = msg.cli;
 
   const resolvedPath = path.resolve(options.targetPath ?? '.');
-  const learnDir = path.join(resolvedPath, LEARN_DIR);
-  const topicsDir = path.join(learnDir, 'topics');
+  const topicsDir = path.join(resolvedPath, LEARN_DIR, 'topics');
 
   // Check npm is available
   try {
@@ -57,10 +56,7 @@ export async function executeServe(options: ServeOptions): Promise<void> {
     process.exit(1);
   }
 
-  // Ensure .learn/ and .learn/topics/ directories exist
-  if (!fs.existsSync(learnDir)) {
-    fs.mkdirSync(learnDir, { recursive: true });
-  }
+  // Ensure .learn/topics/ exists
   if (!fs.existsSync(topicsDir)) {
     fs.mkdirSync(topicsDir, { recursive: true });
   }
@@ -82,8 +78,9 @@ export async function executeServe(options: ServeOptions): Promise<void> {
 
   // Step 2: Install dependencies
   console.log(chalk.cyan(m.installingDependencies));
+  const sitePrefix = path.join(LEARN_DIR, SITE_DIR);
   try {
-    await runCommand('npm', ['install', '--prefix', '.learn'], resolvedPath);
+    await runCommand('npm', ['install', '--prefix', sitePrefix], resolvedPath);
   } catch (err: any) {
     console.error(chalk.red(m.installFailed(err.message)));
     process.exit(1);
@@ -92,7 +89,7 @@ export async function executeServe(options: ServeOptions): Promise<void> {
   // Step 3: Start Vite dev server
   console.log(chalk.cyan(m.startingDevServer));
 
-  const viteArgs: string[] = ['--prefix', '.learn', 'vite', '.learn'];
+  const viteArgs: string[] = ['--prefix', sitePrefix, 'vite', sitePrefix];
   if (options.port) {
     viteArgs.push('--port', String(options.port));
   }

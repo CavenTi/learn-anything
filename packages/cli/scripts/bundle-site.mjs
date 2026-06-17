@@ -43,6 +43,48 @@ function isExcluded(relPath) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Content transformation for deployed paths                          */
+/*                                                                     */
+/*  The dev project (packages/cli/site/) and the deployed site          */
+/*  (.learn/site/) have different directory layouts.  When topics/      */
+/*  moves from a subdirectory of site/ to a sibling under .learn/,      */
+/*  relative imports in vite.config.ts and useTopicData.ts must be      */
+/*  adjusted.                                                          */
+/* ------------------------------------------------------------------ */
+
+const PATH_TRANSFORMS = {
+  'vite.config.ts': [
+    // resolve(__dirname, 'topics') → resolve(__dirname, '../topics')
+    ["resolve(__dirname, 'topics')", "resolve(__dirname, '../topics')"],
+  ],
+  'src/composables/useTopicData.ts': [
+    // ../../topics/ → ../../../topics/  (topics is now under .learn/ not site/)
+    ['../../topics/', '../../../topics/'],
+  ],
+};
+
+/**
+ * Applies content transformations for the deployed directory layout.
+ * The dev project has topics/ inside site/; the deployed project has
+ * topics/ alongside site/ under .learn/.
+ *
+ * @param {string} relPath  Relative file path within site/.
+ * @param {string} content  Original file content.
+ * @returns {string}        Transformed content (or unchanged).
+ */
+function transformContent(relPath, content) {
+  const dirRelPath = relPath.replace(/\\/g, '/');
+  const transforms = PATH_TRANSFORMS[dirRelPath];
+  if (!transforms) return content;
+
+  let result = content;
+  for (const [from, to] of transforms) {
+    result = result.replaceAll(from, to);
+  }
+  return result;
+}
+
+/* ------------------------------------------------------------------ */
 /*  File scanner                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -86,7 +128,8 @@ export function bundleSite(siteDir) {
       if (stat.isDirectory()) {
         walk(fullPath);
       } else if (stat.isFile()) {
-        files[relPath] = readFileSync(fullPath, 'utf-8');
+        const raw = readFileSync(fullPath, 'utf-8');
+        files[relPath] = transformContent(relPath, raw);
       }
     }
   }
