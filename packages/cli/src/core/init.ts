@@ -21,6 +21,7 @@ type InitCommandOptions = {
   locale?: SupportedLocale;
   update?: boolean;
   context7?: boolean;
+  site?: boolean;
 };
 
 export class InitCommand {
@@ -30,6 +31,8 @@ export class InitCommand {
   private readonly isUpdate: boolean;
   private readonly context7Arg?: boolean;
   private context7Enabled: boolean = false;
+  private readonly siteArg?: boolean;
+  private siteEnabled: boolean = false;
 
   constructor(options: InitCommandOptions = {}) {
     this.toolsArg = options.tools;
@@ -37,6 +40,11 @@ export class InitCommand {
     this.locale = options.locale ?? 'en';
     this.isUpdate = options.update ?? false;
     this.context7Arg = options.context7;
+    this.siteArg = options.site;
+  }
+
+  get isSiteEnabled(): boolean {
+    return this.siteEnabled;
   }
 
   async execute(targetPath: string = '.'): Promise<void> {
@@ -98,6 +106,12 @@ export class InitCommand {
     this.context7Enabled = await this.promptContext7();
     if (this.context7Enabled) {
       console.log(chalk.dim(m.init.context7Enabled));
+    }
+
+    // Site generation prompt
+    this.siteEnabled = await this.promptSite();
+    if (this.siteEnabled) {
+      console.log(chalk.dim(m.init.siteEnabled));
     }
     console.log('');
 
@@ -161,6 +175,18 @@ export class InitCommand {
 
     const { confirm } = await import('@inquirer/prompts');
     return confirm({ message: m.init.context7Prompt, default: true });
+  }
+
+  private async promptSite(): Promise<boolean> {
+    const m = getMessages(this.locale);
+
+    if (this.siteArg === true) return true;
+    if (this.siteArg === false) return false;
+
+    if (!isInteractive()) return false;
+
+    const { confirm } = await import('@inquirer/prompts');
+    return confirm({ message: m.init.sitePrompt, default: true });
   }
 
   private async detectTools(_resolvedPath: string): Promise<AIToolOption[]> {

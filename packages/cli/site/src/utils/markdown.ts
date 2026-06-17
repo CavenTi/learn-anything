@@ -1,0 +1,98 @@
+import MarkdownIt from 'markdown-it';
+import hljs from 'highlight.js';
+import '../styles/code.css';
+
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: false,
+  highlight(str: string, lang: string): string {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return (
+          '<pre><code class="hljs language-' +
+          lang +
+          '">' +
+          hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+          '</code></pre>'
+        );
+      } catch {
+        // fall through
+      }
+    }
+    // Auto-detect if no language specified
+    try {
+      const result = hljs.highlightAuto(str);
+      return '<pre><code class="hljs">' + result.value + '</code></pre>';
+    } catch {
+      return '<pre><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+    }
+  },
+});
+
+/**
+ * Renders a Markdown string to HTML.
+ */
+export function renderMarkdown(src: string): string {
+  return md.render(src);
+}
+
+/**
+ * Highlights raw code with syntax highlighting.
+ * Accepts a language name (or file extension) and returns HTML.
+ */
+export function highlightCode(code: string, lang: string): string {
+  // Map file extensions to language names
+  const langMap: Record<string, string> = {
+    js: 'javascript',
+    ts: 'typescript',
+    jsx: 'javascript',
+    tsx: 'typescript',
+    py: 'python',
+    rb: 'ruby',
+    rs: 'rust',
+    go: 'go',
+    java: 'java',
+    sh: 'bash',
+    yml: 'yaml',
+    toml: 'toml',
+    sql: 'sql',
+    json: 'json',
+    css: 'css',
+    html: 'html',
+    md: 'markdown',
+  };
+
+  const resolvedLang = langMap[lang] || lang;
+
+  if (hljs.getLanguage(resolvedLang)) {
+    try {
+      return hljs.highlight(code, { language: resolvedLang, ignoreIllegals: true }).value;
+    } catch {
+      // fall through
+    }
+  }
+
+  // Auto-detect
+  try {
+    return hljs.highlightAuto(code).value;
+  } catch {
+    return md.utils.escapeHtml(code);
+  }
+}
+
+/**
+ * Gets the file extension from a path.
+ */
+export function getFileExtension(path: string): string {
+  const parts = path.split('.');
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+}
+
+/**
+ * Checks if a file is a markdown file.
+ */
+export function isMarkdownFile(path: string): boolean {
+  return /\.md$/i.test(path);
+}

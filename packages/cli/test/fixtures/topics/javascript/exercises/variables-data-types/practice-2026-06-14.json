@@ -1,0 +1,13 @@
+{
+  "concept": "variables-data-types",
+  "date": "2026-06-14",
+  "score": 3,
+  "maxScore": 4,
+  "results": [
+    { "function": "formatUser", "passed": true },
+    { "function": "getTypeDescription", "passed": true },
+    { "function": "createCounter", "passed": true },
+    { "function": "isMutable", "passed": false }
+  ],
+  "notes": "Got isMutable wrong — forgot that arrays are typeof 'object' and are mutable."
+}

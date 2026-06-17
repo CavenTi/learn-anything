@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "topic": "Python",
+  "slug": "python",
+  "created": "2026-06-15",
+  "domains": [
+    {
+      "name": "基础语法与数据类型",
+      "slug": "basics-data-types",
+      "concepts": [
+        {
+          "name": "变量与赋值",
+          "slug": "variables",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": ["多重赋值", "命名规则与 PEP 8", "动态类型 vs 强类型", "None 类型"]
+        },
+        {
+          "name": "数字与字符串",
+          "slug": "numbers-strings",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": [
+            "int / float / complex",
+            "字符串格式化 (f-string)",
+            "字符串常用方法",
+            "Unicode 与编码"
+          ]
+        },
+        {
+          "name": "列表与元组",
+          "slug": "list-comprehension",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": ["列表方法 (append/pop/slice)", "列表推导式", "元组不可变性", "序列解包"]
+        },
+        {
+          "name": "字典与集合",
+          "slug": "dict-set",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": [
+            "字典推导式",
+            "defaultdict 与 Counter",
+            "集合运算 (交集/并集/差集)",
+            "哈希性与不可变键"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "控制流与函数",
+      "slug": "control-flow",
+      "concepts": [
+        {
+          "name": "条件与循环",
+          "slug": "conditionals-loops",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": [
+            "if / elif / else",
+            "for / while / range",
+            "enumerate 与 zip",
+            "break / continue / else on loops"
+          ]
+        },
+        {
+          "name": "函数定义与参数",
+          "slug": "function-params",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": [
+            "位置参数与关键字参数",
+            "*args 与 **kwargs",
+            "默认参数陷阱",
+            "类型注解与 typing 模块"
+          ]
+        },
+        {
+          "name": "装饰器与闭包",
+          "slug": "decorators-closures",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": ["闭包原理", "装饰器语法糖", "functools.wraps", "参数化装饰器"]
+        },
+        {
+          "name": "生成器与迭代器",
+          "slug": "generators-iterators",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": [
+            "yield 与生成器函数",
+            "迭代器协议 (__iter__/__next__)",
+            "生成器表达式",
+            "itertools 模块"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "面向对象编程",
+      "slug": "oop",
+      "concepts": [
+        {
+          "name": "类与实例",
+          "slug": "classes-instances",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": [
+            "__init__ 与 self",
+            "类属性 vs 实例属性",
+            "魔法方法 (__str__/__repr__/__eq__)",
+            "property 装饰器"
+          ]
+        },
+        {
+          "name": "继承与多态",
+          "slug": "inheritance-polymorphism",
+          "status": "unexplored",
+          "confidence": 0,
+          "practice_count": 0,
+          "explain_count": 0,
+          "last_explained": null,
+          "last_practiced": null,
+          "details": ["单继承与多继承", "MRO 与 super()", "ABC 与抽象方法", "鸭子类型"]
+        }
+      ]
+    }
+  ]
+}
