@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-06-19
+
+### Added
+
+- **Automated release workflow**: `scripts/release.sh` orchestrates the full release end-to-end — `develop` → release branch → CI-gated PR to `main` → tag → GitHub Release → sync back to `develop`. Release notes are sourced from the gitignored `release-notes.md`, so the CHANGELOG, PR body, and GitHub Release all stay in sync from a single source.
+
+### Changed
+
+- **Cleaner shareable URLs**: The sidebar tab (notes/exercises) is now inferred from the selected file's path (`/topics/<slug>/sessions/` vs `/topics/<slug>/exercises/`) instead of a redundant `&tab=` query parameter. Switching tabs is now a pure UI action that no longer pollutes the URL.
+
+### Fixed
+
+- **Python dunders render verbatim**: `__init__`, `__proto__`, `__name__`, and other dunder identifiers no longer get mangled into bold (`<strong>init</strong>`) by markdown's underscore emphasis rule. Underscore-based emphasis is now disabled, while `*`/`**` emphasis (bold/italic), code blocks, inline code, and links are fully preserved. (The knowledge map's manual `\_\_proto\_\_` escaping is no longer needed.)
+- **Angle-bracket content no longer vanishes**: Sequences like `<init>`, `<T>`, and `<T extends U>` are no longer swallowed as raw HTML tags. Raw HTML in notes is disabled (`html: false`), which both fixes the disappearing-text bug and closes the `v-html` injection (XSS) surface.
+
 ## [1.2.0] - 2026-06-18
 
 ### Added
@@ -174,7 +189,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.0.0...v1.1.0
