@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-06-18
+
+### Added
+
+- **Standalone API server** (`serve.mjs`): Extracted the serve API logic from the Vite plugin into a standalone server, providing cleaner separation between the dev server and data layer.
+
+### Changed
+
+- **HTTP API data layer**: Refactored `useTopicData.ts` to fetch topic data via HTTP API instead of static file imports, enabling dynamic data updates without rebuild.
+- **Simplified vite.config.ts**: Removed the inline serve API plugin; the API server now runs independently via `serve.mjs`.
+- **`bundle-site.mjs` refactored**: Streamlined the site build bundle script.
+
+### Removed
+
+- **Legacy modules**: Removed `files.ts` and `site-generator.ts` — their functionality has been absorbed into the new API server and build pipeline.
+
+### Fixed
+
+- **CI build**: Added `packages/cli/site/` to the pnpm workspace so its dependencies (vue, vue-router) are installed by CI, resolving a build failure.
+
 ## [1.0.0] - 2026-06-18
 
 ### Added
@@ -118,7 +138,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.1...v1.0.0
 [0.5.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.4.2...v0.5.0
