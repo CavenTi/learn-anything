@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from '../../composables/useI18n';
+import { useTreeExpansion } from '../../composables/useTreeExpansion';
 import {
+  loadTopic,
   scanExercises,
   scanRootExercises,
-  loadFileContent,
   getDataVersion,
 } from '../../composables/useTopicData';
 import type { ExerciseGroup, ExerciseFile } from '../../composables/useTopicData';
@@ -16,16 +17,44 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'file-selected': [file: { path: string; content: string; type: 'markdown' | 'code' }];
+  'file-selected': [file: { path: string; type: 'markdown' | 'code' }];
 }>();
 
 const { t } = useI18n();
 
-const expandedConcepts = ref<Set<string>>(new Set());
+const {
+  expanded: expandedConcepts,
+  load: loadExpansion,
+  toggle: toggleExpansion,
+  add: addExpansion,
+} = useTreeExpansion('exercises');
 
-const exerciseGroups = computed<ExerciseGroup[]>(() => {
+type ExerciseGroupWithFlag = ExerciseGroup & { isOrphan: boolean };
+
+/* Mirror the actual exercises/ folders; state.json supplies the concept name
+   and ordering, folders absent from state.json are shown as orphans. */
+const exerciseGroups = computed<ExerciseGroupWithFlag[]>(() => {
   void getDataVersion();
-  return scanExercises(props.topicSlug);
+  const groups = scanExercises(props.topicSlug);
+  const state = loadTopic(props.topicSlug);
+
+  const knownSlugs = new Set<string>();
+  const orderMap = new Map<string, number>();
+  let idx = 0;
+  for (const d of state?.domains ?? []) {
+    for (const c of d.concepts) {
+      knownSlugs.add(c.slug);
+      orderMap.set(c.slug, idx++);
+    }
+  }
+
+  return groups
+    .map((g) => ({ ...g, isOrphan: !knownSlugs.has(g.conceptSlug) }))
+    .sort((a, b) => {
+      const oa = orderMap.get(a.conceptSlug) ?? Number.MAX_SAFE_INTEGER;
+      const ob = orderMap.get(b.conceptSlug) ?? Number.MAX_SAFE_INTEGER;
+      return oa !== ob ? oa - ob : a.conceptSlug.localeCompare(b.conceptSlug);
+    });
 });
 
 const rootExercises = computed<ExerciseFile[]>(() => {
@@ -33,19 +62,30 @@ const rootExercises = computed<ExerciseFile[]>(() => {
   return scanRootExercises(props.topicSlug);
 });
 
+/* Switching topic: restore its persisted expansion (default to first node). */
 watch(
-  () => [props.topicSlug, props.selectedFilePath] as const,
-  ([slug, filePath]) => {
-    expandedConcepts.value = new Set();
-    if (!slug) return;
+  () => props.topicSlug,
+  (slug) => {
+    if (!slug) {
+      expandedConcepts.value = new Set();
+      return;
+    }
+    const first = exerciseGroups.value[0]?.conceptSlug;
+    loadExpansion(slug, first ? [first] : []);
+  },
+  { immediate: true },
+);
 
-    if (filePath) {
-      const groups = scanExercises(slug);
-      for (const group of groups) {
-        if (group.files.some((f) => f.path === filePath)) {
-          expandedConcepts.value.add(group.conceptSlug);
-          return;
-        }
+/* Selecting a file: expand its parent concept without collapsing others. */
+watch(
+  () => props.selectedFilePath,
+  (filePath) => {
+    if (!filePath || !props.topicSlug) return;
+    const groups = scanExercises(props.topicSlug);
+    for (const group of groups) {
+      if (group.files.some((f) => f.path === filePath)) {
+        addExpansion(props.topicSlug, group.conceptSlug);
+        return;
       }
     }
   },
@@ -53,17 +93,12 @@ watch(
 );
 
 function toggleConcept(conceptSlug: string) {
-  const s = new Set(expandedConcepts.value);
-  if (s.has(conceptSlug)) s.delete(conceptSlug);
-  else s.add(conceptSlug);
-  expandedConcepts.value = s;
+  toggleExpansion(props.topicSlug, conceptSlug);
 }
 
-async function selectExerciseFile(file: ExerciseFile) {
-  const content = await loadFileContent(file.path);
-  if (content === null) return;
+function selectExerciseFile(file: ExerciseFile) {
   const type = isMarkdownFile(file.name) ? 'markdown' : 'code';
-  emit('file-selected', { path: file.path, content, type });
+  emit('file-selected', { path: file.path, type });
 }
 </script>
 
@@ -78,16 +113,25 @@ async function selectExerciseFile(file: ExerciseFile) {
               ? 'text-text-1'
               : 'text-text-2 hover:text-text-1'
           "
+          :title="group.isOrphan ? t('sidebar.orphanTip') : undefined"
           @click="toggleConcept(group.conceptSlug)"
         >
           <span
             class="text-[10px] transition-transform duration-150 shrink-0 w-3 text-center"
             :class="expandedConcepts.has(group.conceptSlug) ? 'rotate-90' : ''"
           >▶</span>
+          <span
+            v-if="group.isOrphan"
+            class="inline-block w-[5px] h-[5px] rounded-full bg-text-3 shrink-0"
+            aria-hidden="true"
+          ></span>
           <span class="truncate">{{ group.conceptName }}</span>
         </button>
 
         <div v-if="expandedConcepts.has(group.conceptSlug)" class="pl-4 mb-1 space-y-px">
+          <div v-if="group.files.length === 0" class="py-1 text-[11px] text-text-3">
+            {{ t('sidebar.noExercises') }}
+          </div>
           <button
             v-for="file in group.files"
             :key="file.path"
