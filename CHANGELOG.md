@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-06-18
+
+### Added
+
+- **Loading overlay**: Red-pen annotated loading overlay (150ms threshold) for file loads, matching the notebook design theme.
+- **Sidebar tree expansion persistence**: Expanded domains/concepts now persist across navigation and page refresh via sessionStorage; expanding one node no longer collapses others.
+- **Orphan directory marking**: Directories not in `state.json` (orphans) display their English name with a gray dot and a full-row hover tooltip.
+
+### Changed
+
+- **Sidebar trees mirror actual directories**: The notes and exercises trees now reflect the real `sessions/` and `exercises/` directory structure; `state.json` is used only for display names and ordering.
+- **Empty directory display**: Empty directories (including orphans) are now shown in the sidebar with a "no notes/no exercises" placeholder.
+- **Async content loading**: File selection is now synchronous while content loads asynchronously, eliminating first-render flicker.
+
+### Fixed
+
+- **Note flicker on reload**: Fixed the note content flicker on page reload.
+- **Skeleton screen for empty content**: Fixed the skeleton loading screen incorrectly shown for files with empty content.
+
 ## [1.1.1] - 2026-06-18
 
 ### Added
@@ -155,7 +174,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.1...v1.0.0

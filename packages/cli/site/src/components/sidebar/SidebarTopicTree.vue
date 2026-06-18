@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from '../../composables/useI18n';
+import { useTreeExpansion } from '../../composables/useTreeExpansion';
 import {
   loadTopic,
   scanSessions,
+  scanDomainDirs,
   scanRootSessions,
-  loadFileContent,
   getDataVersion,
 } from '../../composables/useTopicData';
 import type { Domain, SessionFile } from '../../composables/useTopicData';
@@ -16,17 +17,23 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'file-selected': [file: { path: string; content: string; type: 'markdown' }];
+  'file-selected': [file: { path: string; type: 'markdown' }];
   'knowledge-map': [];
 }>();
 
 const { t } = useI18n();
 
-const expandedDomains = ref<Set<string>>(new Set());
+const {
+  expanded: expandedDomains,
+  load: loadExpansion,
+  toggle: toggleExpansion,
+  add: addExpansion,
+} = useTreeExpansion('topics');
 
 interface DomainWithSessions {
   domain: Domain;
   sessions: SessionFile[];
+  isOrphan: boolean;
 }
 
 const currentState = computed(() => {
@@ -34,13 +41,31 @@ const currentState = computed(() => {
   return loadTopic(props.topicSlug);
 });
 
+/* Mirror the actual sessions/ folders. state.json only supplies the display
+   name and ordering; folders absent from state.json are shown as orphans. */
 const domainSessions = computed<DomainWithSessions[]>(() => {
   void getDataVersion();
-  if (!currentState.value) return [];
-  return currentState.value.domains.map((domain) => ({
-    domain,
-    sessions: scanSessions(props.topicSlug, domain.slug),
-  }));
+  const state = currentState.value;
+  const dirSlugs = scanDomainDirs(props.topicSlug);
+  if (dirSlugs.length === 0) return [];
+
+  const domainMap = new Map((state?.domains ?? []).map((d) => [d.slug, d]));
+  const orderMap = new Map((state?.domains ?? []).map((d, i) => [d.slug, i]));
+
+  return dirSlugs
+    .map((slug) => {
+      const domain = domainMap.get(slug);
+      return {
+        domain: domain ?? { name: slug, slug, concepts: [] },
+        sessions: scanSessions(props.topicSlug, slug),
+        isOrphan: !domain,
+      };
+    })
+    .sort((a, b) => {
+      const oa = orderMap.get(a.domain.slug) ?? Number.MAX_SAFE_INTEGER;
+      const ob = orderMap.get(b.domain.slug) ?? Number.MAX_SAFE_INTEGER;
+      return oa !== ob ? oa - ob : a.domain.slug.localeCompare(b.domain.slug);
+    });
 });
 
 const rootSessions = computed<SessionFile[]>(() => {
@@ -48,40 +73,42 @@ const rootSessions = computed<SessionFile[]>(() => {
   return scanRootSessions(props.topicSlug);
 });
 
+/* Switching topic: restore its persisted expansion (default to first node). */
 watch(
-  () => [props.topicSlug, props.selectedFilePath] as const,
-  ([slug, filePath]) => {
-    expandedDomains.value = new Set();
-    if (!slug) return;
-    const state = loadTopic(slug);
+  () => props.topicSlug,
+  (slug) => {
+    if (!slug) {
+      expandedDomains.value = new Set();
+      return;
+    }
+    const first = domainSessions.value[0]?.domain.slug;
+    loadExpansion(slug, first ? [first] : []);
+  },
+  { immediate: true },
+);
 
-    if (filePath) {
-      for (const domain of state?.domains ?? []) {
-        const sessions = scanSessions(slug, domain.slug);
-        if (sessions.some((s) => s.path === filePath)) {
-          expandedDomains.value.add(domain.slug);
-          return;
-        }
+/* Selecting a file: expand its parent folder (incl. orphans) without collapsing others. */
+watch(
+  () => props.selectedFilePath,
+  (filePath) => {
+    if (!filePath || !props.topicSlug) return;
+    for (const dirSlug of scanDomainDirs(props.topicSlug)) {
+      const sessions = scanSessions(props.topicSlug, dirSlug);
+      if (sessions.some((s) => s.path === filePath)) {
+        addExpansion(props.topicSlug, dirSlug);
+        return;
       }
     }
-
-    if (state?.domains[0]) expandedDomains.value.add(state.domains[0].slug);
   },
   { immediate: true },
 );
 
 function toggleDomain(domainSlug: string) {
-  const s = new Set(expandedDomains.value);
-  if (s.has(domainSlug)) s.delete(domainSlug);
-  else s.add(domainSlug);
-  expandedDomains.value = s;
+  toggleExpansion(props.topicSlug, domainSlug);
 }
 
-async function selectSessionFile(file: SessionFile) {
-  const content = await loadFileContent(file.path);
-  if (content !== null) {
-    emit('file-selected', { path: file.path, content, type: 'markdown' });
-  }
+function selectSessionFile(file: SessionFile) {
+  emit('file-selected', { path: file.path, type: 'markdown' });
 }
 </script>
 
@@ -103,12 +130,18 @@ async function selectSessionFile(file: SessionFile) {
               ? 'text-text-1'
               : 'text-text-2 hover:text-text-1'
           "
+          :title="ds.isOrphan ? t('sidebar.orphanTip') : undefined"
           @click="toggleDomain(ds.domain.slug)"
         >
           <span
             class="text-[10px] transition-transform duration-150 shrink-0 w-3 text-center"
             :class="expandedDomains.has(ds.domain.slug) ? 'rotate-90' : ''"
           >▶</span>
+          <span
+            v-if="ds.isOrphan"
+            class="inline-block w-[5px] h-[5px] rounded-full bg-text-3 shrink-0"
+            aria-hidden="true"
+          ></span>
           <span class="truncate">{{ ds.domain.name }}</span>
         </button>
 
