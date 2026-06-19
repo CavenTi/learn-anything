@@ -110,24 +110,31 @@ program
   .command('serve [path]')
   .description(m.cli.serveCommandDescription)
   .option('--port <number>', m.cli.portOption, parseInt)
+  .option('--strict-port', m.cli.strictPortOption)
   .option('--no-open', m.cli.noOpenOption)
   .option('--lang <locale>', m.cli.langOption)
-  .action(async (targetPath = '.', options?: { port?: number; open?: boolean; lang?: string }) => {
-    const cliLocale = resolveLocale(options?.lang);
-    const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
-    try {
-      const { executeServe } = await import('../core/serve.js');
-      await executeServe({
-        targetPath,
-        port: options?.port,
-        open: options?.open,
-        locale: cliLocale,
-      });
-    } catch (error) {
-      console.log();
-      console.error(chalk.red(mc.errorPrefix((error as Error).message)));
-      process.exit(1);
-    }
-  });
+  .action(
+    async (
+      targetPath = '.',
+      options?: { port?: number; strictPort?: boolean; open?: boolean; lang?: string },
+    ) => {
+      const cliLocale = resolveLocale(options?.lang);
+      const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
+      try {
+        const { executeServe } = await import('../core/serve.js');
+        await executeServe({
+          targetPath,
+          port: options?.port,
+          strictPort: options?.strictPort,
+          open: options?.open,
+          locale: cliLocale,
+        });
+      } catch (error) {
+        console.log();
+        console.error(chalk.red(mc.errorPrefix((error as Error).message)));
+        process.exit(1);
+      }
+    },
+  );
 
 program.parse();
