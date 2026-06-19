@@ -4,6 +4,8 @@ export interface ServeMessages {
   startingServer: string;
   siteReady: (url: string) => string;
   portInUse: (port: number) => string;
+  portSwitched: (from: number, to: number) => string;
+  portRangeExhausted: (start: number, end: number) => string;
   emptyTopics: string;
   serverStopped: string;
   siteNotBuilt: string;
@@ -22,6 +24,7 @@ export interface CLIMessages {
   forceOption: string;
   langOption: string;
   portOption: string;
+  strictPortOption: string;
   noOpenOption: string;
   serveCommandDescription: string;
   serveHint: string;
