@@ -218,12 +218,12 @@ onBeforeUnmount(() => {
                   :class="activeIndex === group.startIndex + i ? 'bg-brand-2' : 'bg-transparent'"
                 />
                 <span
-                  class="flex-1 truncate text-sm"
+                  class="w-1/2 truncate text-sm"
                   :class="entry.level === 0 ? 'font-medium' : ''"
                 >
                   {{ entry.title }}
                 </span>
-                <span class="shrink-0 truncate font-mono text-xs text-text-3">
+                <span class="w-1/2 truncate-start font-mono text-xs text-text-3">
                   {{ breadcrumb(entry) }}
                 </span>
               </button>
@@ -243,3 +243,13 @@ onBeforeUnmount(() => {
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+.truncate-start {
+  direction: rtl;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
