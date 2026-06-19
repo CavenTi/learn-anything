@@ -6,10 +6,12 @@ import { createRequire } from 'module';
 import { LEARN_DIR } from '../core/config.js';
 import { getMessages } from '../i18n/index.js';
 import type { SupportedLocale } from '../i18n/types.js';
+import { DEFAULT_PORT, findFreePort, isPortFree } from '../utils/port.js';
 
 export interface ServeOptions {
   targetPath?: string;
   port?: number;
+  strictPort?: boolean;
   open?: boolean;
   locale?: SupportedLocale;
 }
@@ -40,7 +42,28 @@ export async function executeServe(options: ServeOptions): Promise<void> {
 
   const require = createRequire(import.meta.url);
   const siteDistDir = path.join(path.dirname(require.resolve('../../package.json')), 'site-dist');
-  const port = options.port ?? 24278;
+  const requestedPort = options.port ?? DEFAULT_PORT;
+
+  let port: number;
+  if (options.strictPort) {
+    // Honour the exact port; surface a clear error if it is taken.
+    if (!(await isPortFree(requestedPort))) {
+      console.error(chalk.red(m.portInUse(requestedPort)));
+      process.exit(1);
+    }
+    port = requestedPort;
+  } else {
+    try {
+      port = await findFreePort(requestedPort);
+    } catch {
+      const endPort = requestedPort + 50 - 1;
+      console.error(chalk.red(m.portRangeExhausted(requestedPort, endPort)));
+      process.exit(1);
+    }
+    if (port !== requestedPort) {
+      console.log(chalk.yellow(m.portSwitched(requestedPort, port)));
+    }
+  }
 
   if (!fs.existsSync(path.join(siteDistDir, 'serve.mjs'))) {
     console.error(chalk.red(m.siteNotBuilt));

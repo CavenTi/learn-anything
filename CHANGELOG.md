@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-06-19
+
+### Fixed
+
+- **Auto-find free port for `serve`**: When running `learn-anything serve`, if the target port is already in use the server now automatically probes for the next available port (up to 50 attempts) instead of exiting with an error. Use `--strict-port` to opt out and require the exact port.
+- **TOC activeId flash on click**: When clicking a heading in the table of contents sidebar, the active highlight no longer flickers through intermediate headings during smooth scroll. The IntersectionObserver is temporarily suppressed until the scroll animation completes.
+
 ## [1.3.0] - 2026-06-19
 
 ### Added
@@ -208,7 +215,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.0...v1.2.1
