@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-06-19
+
+### Fixed
+
+- **Sanitized HTML rendering**: Markdown output is now sanitized via DOMPurify. Safe HTML renders normally — including the `<details>/<summary>` collapsible blocks used for answers, tables, and code highlighting — while dangerous constructs (`<script>`, `on*` event handlers, `javascript:` URIs, `<iframe>`, etc.) are stripped, closing the `v-html` injection surface.
+
 ## [1.2.1] - 2026-06-19
 
 ### Added
@@ -189,7 +195,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.0...v1.1.1
