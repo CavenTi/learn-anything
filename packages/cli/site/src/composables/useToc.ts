@@ -24,8 +24,10 @@ export interface TocItem {
 export function useToc(containerRef: Ref<HTMLElement | null | undefined>) {
   const headings = ref<TocItem[]>([]);
   const activeId = ref<string>('');
+  const isScrollingProgrammatically = ref(false);
 
   let observer: IntersectionObserver | null = null;
+  let scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
   function refresh(): void {
     const container = containerRef.value;
@@ -46,6 +48,7 @@ export function useToc(containerRef: Ref<HTMLElement | null | undefined>) {
 
     observer = new IntersectionObserver(
       (entries) => {
+        if (isScrollingProgrammatically.value) return;
         const intersecting = entries.filter((e) => e.isIntersecting);
         if (intersecting.length === 0) return;
         intersecting.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -62,12 +65,26 @@ export function useToc(containerRef: Ref<HTMLElement | null | undefined>) {
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     activeId.value = id;
+    isScrollingProgrammatically.value = true;
+    if (scrollTimer) clearTimeout(scrollTimer);
+    const onScroll = () => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        isScrollingProgrammatically.value = false;
+        window.removeEventListener('scroll', onScroll);
+        scrollTimer = null;
+      }, 150);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
     if (typeof history !== 'undefined') {
       history.replaceState(null, '', `#${id}`);
     }
   }
 
-  onBeforeUnmount(() => observer?.disconnect());
+  onBeforeUnmount(() => {
+    observer?.disconnect();
+    if (scrollTimer) clearTimeout(scrollTimer);
+  });
 
   return { headings, activeId, refresh, scrollTo };
 }
