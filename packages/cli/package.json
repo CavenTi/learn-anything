@@ -1,6 +1,6 @@
 {
   "name": "learn-anything-cli",
-  "version": "0.5.0",
+  "version": "1.3.2",
   "description": "AI-powered recursive learning system with Socratic method and TDD practice",
   "keywords": [
     "learn-anything-cli",
@@ -34,13 +34,14 @@
   },
   "files": [
     "dist",
+    "site-dist",
     "bin",
     "!dist/**/*.test.js",
     "!dist/**/__tests__",
     "!dist/**/*.map"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "node scripts/bundle-site.mjs && tsc",
     "dev": "tsc --watch",
     "dev:cli": "pnpm build && node bin/learn-anything.js",
     "test": "vitest run",

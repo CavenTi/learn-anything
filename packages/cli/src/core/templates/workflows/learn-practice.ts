@@ -64,6 +64,7 @@ Example starter:
 /**
  * <concept-name> — <difficulty>
  * Open README.md for full description. Replace TODOs with your implementation.
+ * 📁 If based on existing project source, reference: <file-path>:<line-range>
  */
 
 // TODO: implement the solution

@@ -5,6 +5,134 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-06-19
+
+### Fixed
+
+- **Search result layout**: Title and file path columns in search results now split the available width equally, preventing long paths from compressing the title to a single character. Long paths truncate from the left so the filename remains visible.
+
+## [1.3.1] - 2026-06-19
+
+### Fixed
+
+- **Auto-find free port for `serve`**: When running `learn-anything serve`, if the target port is already in use the server now automatically probes for the next available port (up to 50 attempts) instead of exiting with an error. Use `--strict-port` to opt out and require the exact port.
+- **TOC activeId flash on click**: When clicking a heading in the table of contents sidebar, the active highlight no longer flickers through intermediate headings during smooth scroll. The IntersectionObserver is temporarily suppressed until the scroll animation completes.
+
+## [1.3.0] - 2026-06-19
+
+### Added
+
+- **Heading search (⌘K / Ctrl+K)**: A VitePress-style command palette opens via keyboard shortcut or sidebar button, letting users jump to any heading across session notes, the knowledge map, and exercise docs. The server builds a lazy, cached search index (`/api/search-index`) that refreshes on file change; the client filters locally with no per-keystroke requests.
+- **Heading anchor links**: Every rendered heading now carries a deep-linkable `id` and a hover-revealed `#` permalink (brand-accent color). Clicking the anchor or entering a `#slug` URL scrolls smoothly to the section, surviving async content loads and page refreshes. CJK heading text is preserved in slugs.
+- **Table of contents outline**: A right-side sticky TOC panel (visible at `xl` breakpoint and above) lists `h2`/`h3` headings for the current note or knowledge map. An `IntersectionObserver` scroll-spy highlights the active section; clicking an item scrolls to it and syncs the URL hash.
+
+### Fixed
+
+- **Dark-mode scrollbar colors**: Native scrollbars (sidebar tree, search modal, code blocks) now adapt to dark mode via CSS-variable-based `scrollbar-color` and `::-webkit-scrollbar` rules, instead of showing the light system default.
+- **Heading anchor accessibility**: The permalink anchor switched from `aria-hidden="true"` to `aria-label` + `tabindex="-1"`, resolving a browser warning when the anchor receives focus on click.
+
+## [1.2.2] - 2026-06-19
+
+### Fixed
+
+- **Sanitized HTML rendering**: Markdown output is now sanitized via DOMPurify. Safe HTML renders normally — including the `<details>/<summary>` collapsible blocks used for answers, tables, and code highlighting — while dangerous constructs (`<script>`, `on*` event handlers, `javascript:` URIs, `<iframe>`, etc.) are stripped, closing the `v-html` injection surface.
+
+## [1.2.1] - 2026-06-19
+
+### Added
+
+- **Automated release workflow**: `scripts/release.sh` orchestrates the full release end-to-end — `develop` → release branch → CI-gated PR to `main` → tag → GitHub Release → sync back to `develop`. Release notes are sourced from the gitignored `release-notes.md`, so the CHANGELOG, PR body, and GitHub Release all stay in sync from a single source.
+
+### Changed
+
+- **Cleaner shareable URLs**: The sidebar tab (notes/exercises) is now inferred from the selected file's path (`/topics/<slug>/sessions/` vs `/topics/<slug>/exercises/`) instead of a redundant `&tab=` query parameter. Switching tabs is now a pure UI action that no longer pollutes the URL.
+
+### Fixed
+
+- **Python dunders render verbatim**: `__init__`, `__proto__`, `__name__`, and other dunder identifiers no longer get mangled into bold (`<strong>init</strong>`) by markdown's underscore emphasis rule. Underscore-based emphasis is now disabled, while `*`/`**` emphasis (bold/italic), code blocks, inline code, and links are fully preserved. (The knowledge map's manual `\_\_proto\_\_` escaping is no longer needed.)
+- **Angle-bracket content no longer vanishes**: Sequences like `<init>`, `<T>`, and `<T extends U>` are no longer swallowed as raw HTML tags. Raw HTML in notes is disabled (`html: false`), which both fixes the disappearing-text bug and closes the `v-html` injection (XSS) surface.
+
+## [1.2.0] - 2026-06-18
+
+### Added
+
+- **Loading overlay**: Red-pen annotated loading overlay (150ms threshold) for file loads, matching the notebook design theme.
+- **Sidebar tree expansion persistence**: Expanded domains/concepts now persist across navigation and page refresh via sessionStorage; expanding one node no longer collapses others.
+- **Orphan directory marking**: Directories not in `state.json` (orphans) display their English name with a gray dot and a full-row hover tooltip.
+
+### Changed
+
+- **Sidebar trees mirror actual directories**: The notes and exercises trees now reflect the real `sessions/` and `exercises/` directory structure; `state.json` is used only for display names and ordering.
+- **Empty directory display**: Empty directories (including orphans) are now shown in the sidebar with a "no notes/no exercises" placeholder.
+- **Async content loading**: File selection is now synchronous while content loads asynchronously, eliminating first-render flicker.
+
+### Fixed
+
+- **Note flicker on reload**: Fixed the note content flicker on page reload.
+- **Skeleton screen for empty content**: Fixed the skeleton loading screen incorrectly shown for files with empty content.
+
+## [1.1.1] - 2026-06-18
+
+### Added
+
+- **File-to-URL sync**: Selecting a file in the sidebar now updates the browser URL (`?file=...&tab=...`), enabling shareable, bookmarkable links to specific notes and exercises.
+- **Tab state persistence**: The sidebar tab selection (topics/exercises) persists across page reloads via the URL query parameter.
+
+### Changed
+
+- **Smart hot reload**: File changes no longer trigger a full page reload. Instead, a reactive `dataVersion` mechanism triggers component re-renders while preserving scroll position and UI state.
+- **Tree auto-expand on reload**: The sidebar navigation tree now automatically expands to the node containing the currently selected file on page load, instead of always expanding the first domain.
+
+### Fixed
+
+- **Hot reload UX**: Eliminated disruptive full-page refreshes when editing notes or exercises. The page stays stable with scroll position preserved.
+- **Sidebar state loss**: Fixed sidebar tab and tree expansion state being lost on page reload.
+
+## [1.1.0] - 2026-06-18
+
+### Added
+
+- **Standalone API server** (`serve.mjs`): Extracted the serve API logic from the Vite plugin into a standalone server, providing cleaner separation between the dev server and data layer.
+
+### Changed
+
+- **HTTP API data layer**: Refactored `useTopicData.ts` to fetch topic data via HTTP API instead of static file imports, enabling dynamic data updates without rebuild.
+- **Simplified vite.config.ts**: Removed the inline serve API plugin; the API server now runs independently via `serve.mjs`.
+- **`bundle-site.mjs` refactored**: Streamlined the site build bundle script.
+
+### Removed
+
+- **Legacy modules**: Removed `files.ts` and `site-generator.ts` — their functionality has been absorbed into the new API server and build pipeline.
+
+### Fixed
+
+- **CI build**: Added `packages/cli/site/` to the pnpm workspace so its dependencies (vue, vue-router) are installed by CI, resolving a build failure.
+
+## [1.0.0] - 2026-06-18
+
+### Added
+
+- **Visual learning site**: A custom Vue 3 + Vite application with Vue Router, Tailwind CSS v4, markdown-it, and highlight.js. Provides a rich visual interface to browse knowledge maps, session notes, and exercise files.
+- **SiteGenerator class**: Writes front-end site files into `.learn/` directory, with smart config overwrite rules and `--force` mode.
+- **`serve` command**: `learn-anything serve [path]` generates the visual site, installs dependencies, and starts a Vite dev server with hot module replacement.
+- **`--site` flag**: `learn-anything init --site` and `learn-anything update --site` generate the visual site alongside skill/command files.
+- **Interactive site prompt**: `init` and `update` now prompt whether to generate the visual learning site in interactive mode.
+- **Enhanced file scanning**: `sessions/*.md` and `exercises/*` files without subdirectory grouping are now supported and displayed as a flat list at the bottom of the sidebar.
+- **Hot module replacement**: Modifying topic files (state.json, sessions, exercises) triggers automatic browser refresh.
+- **New main specs**: `site-build`, `site-cli`, `site-generator`, `site-theme` specifications added.
+
+### Changed
+
+- **Monorepo structure**: `packages/cli/site/` now houses the standalone Vue 3 front-end app. Site files are bundled into `packages/cli/src/site/files.ts` at build time.
+- **`.learn/` layout**: Site files now live under `.learn/site/`, separate from `.learn/topics/`.
+
+## [0.5.1] - 2026-06-16
+
+### Added
+
+- **Source location annotations**: Code examples in the explain workflow now include source file and line number references, helping the AI tutor provide precise cross-references during Socratic explanations.
+- **Star History chart**: Added an embeddable Star History chart to all README files for better visual visibility of project growth.
+
 ## [0.5.0] - 2026-06-11
 
 ### Changed
@@ -93,7 +221,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.1...v1.3.2
+[1.3.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.2...v1.3.0
+[1.2.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.1...v1.2.2
+[1.2.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.1...v1.2.0
+[1.1.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.1...v1.0.0
+[0.5.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v0.4.0...v0.4.1

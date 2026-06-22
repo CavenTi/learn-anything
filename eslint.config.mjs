@@ -9,10 +9,14 @@ export default tseslint.config(
   {
     ignores: [
       'packages/*/dist/',
+      'packages/cli/site/dist/**',
+      'packages/cli/site-dist/**',
       'packages/*/node_modules/',
       'packages/*/bin/',
       '.claude/',
       '.learn/',
+      'packages/cli/site/topics/',
+      'packages/cli/test/fixtures/',
     ],
   },
   {

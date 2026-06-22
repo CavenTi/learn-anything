@@ -2,7 +2,8 @@
 
 <p align="center">
   <strong>AI 驱动的递归学习系统</strong><br />
-  将你的 AI 编程助手变成交互式导师 — 苏格拉底式教学法 · TDD 风格练习
+  将你的 AI 编程助手变成交互式导师 — 苏格拉底式教学法 · TDD 风格练习<br />
+  <em>现已内置可视化学习仪表盘。</em>
 </p>
 
 <p align="center">
@@ -28,6 +29,7 @@
 - 📝 **自适应测验** — 生成答案隔离的测验，再按概念评分
 - 📊 **间隔重复** — 智能复习，在最佳时机帮你巩固薄弱环节
 - 🔥 **知识可视化** — 热力图直观展示你的掌握状态
+- 🖥️ **可视化仪表盘** — 在丰富的 Web 界面中浏览知识图谱、笔记和练习
 
 ## 快速开始
 
@@ -60,6 +62,32 @@ learn-anything init
 | `/learn:status [名称]`              | 知识图谱热力图 — 掌握度、练习次数、信心分 |
 | `/learn:quiz <generate\|grade> ...` | 生成自适应测验，或对提交答案进行评分      |
 
+### 可视化学习仪表盘
+
+一键启动零配置的 Web 仪表盘来浏览你的学习数据：
+
+```bash
+# 启动可视化仪表盘（无需 npm install）
+learn-anything serve
+
+# 自定义端口
+learn-anything serve --port 8080
+
+# 禁止自动打开浏览器
+learn-anything serve --no-open
+```
+
+> 仪表盘已在 CLI 中预构建并随包发布 — 无需额外依赖或 `npm install`。
+
+仪表盘提供：
+
+- **知识图谱** — Markdown 渲染的学习主题总览
+- **学习笔记** — 按知识域分类浏览所有学习会话笔记
+- **练习预览** — 带语法高亮查看起始代码、参考解答和练习记录
+- **暗色模式** — 明/暗主题切换
+- **国际化** — 完整的中英文界面
+- **热更新** — 添加或修改主题文件时自动刷新浏览器
+
 ## 工作原理
 
 ```
@@ -77,7 +105,8 @@ learn-anything init
 │       └── typescript/
 │           ├── state.json           # 唯一数据源
 │           ├── knowledge-map.md     # 由 state.json 自动渲染
-│           └── sessions/            # 会话历史，用于间隔重复
+│           ├── sessions/            # 会话历史，用于间隔重复
+│           └── exercises/           # TDD 风格编码练习
 └── ...
 ```
 
@@ -89,6 +118,8 @@ learn-anything init
 learn-anything/
 ├── packages/
 │   ├── cli/                     # learn-anything-cli — 发布到 npm
+│   │   ├── site/                 # 仪表盘源码 (Vue 3 + Vite)
+│   │   ├── scripts/              # 构建脚本 (bundle-site.mjs)
 │   │   ├── src/
 │   │   │   ├── cli/             # Commander.js CLI 入口
 │   │   │   ├── core/            # 初始化、配置、命令生成、模板
@@ -143,6 +174,7 @@ pnpm install
 | `pnpm dev`        | TypeScript 监听模式（所有包） |
 | `pnpm lint`       | 代码检查 (`eslint`)           |
 | `pnpm format`     | 格式化代码 (`prettier`)       |
+| `pnpm dev:site`   | 可视化仪表盘开发服务器        |
 
 ### 单独包命令
 

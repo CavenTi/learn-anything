@@ -1,5 +1,16 @@
 export type SupportedLocale = 'zh-CN' | 'en';
 
+export interface ServeMessages {
+  startingServer: string;
+  siteReady: (url: string) => string;
+  portInUse: (port: number) => string;
+  portSwitched: (from: number, to: number) => string;
+  portRangeExhausted: (start: number, end: number) => string;
+  emptyTopics: string;
+  serverStopped: string;
+  siteNotBuilt: string;
+}
+
 export interface CLIMessages {
   programDescription: string;
   initCommandDescription: string;
@@ -12,6 +23,11 @@ export interface CLIMessages {
   updateComplete: string;
   forceOption: string;
   langOption: string;
+  portOption: string;
+  strictPortOption: string;
+  noOpenOption: string;
+  serveCommandDescription: string;
+  serveHint: string;
 }
 
 export interface InitMessages {
@@ -34,4 +50,5 @@ export interface InitMessages {
 export interface LocaleMessages {
   cli: CLIMessages;
   init: InitMessages;
+  serve: ServeMessages;
 }

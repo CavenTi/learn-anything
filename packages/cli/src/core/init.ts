@@ -99,6 +99,7 @@ export class InitCommand {
     if (this.context7Enabled) {
       console.log(chalk.dim(m.init.context7Enabled));
     }
+
     console.log('');
 
     // Generate skill files for each tool

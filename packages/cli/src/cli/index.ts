@@ -11,7 +11,6 @@ const program = new Command();
 const require = createRequire(import.meta.url);
 const { version } = require('../../package.json');
 
-// Parse --lang early from process.argv so we can localize static descriptions
 const langIdx = process.argv.indexOf('--lang');
 const earlyLocale = langIdx !== -1 ? resolveLocale(process.argv[langIdx + 1]) : resolveLocale();
 const m = getMessages(earlyLocale);
@@ -34,10 +33,16 @@ program
   .action(
     async (
       targetPath = '.',
-      options?: { tools?: string; force?: boolean; lang?: string; context7?: boolean },
+      options?: {
+        tools?: string;
+        force?: boolean;
+        lang?: string;
+        context7?: boolean;
+      },
     ) => {
       const cliLocale = resolveLocale(options?.lang);
-      const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
+      const localeMsgs = cliLocale !== earlyLocale ? getMessages(cliLocale) : m;
+      const mc = localeMsgs.cli;
       try {
         const resolvedPath = path.resolve(targetPath);
 
@@ -64,6 +69,7 @@ program
           context7: options?.context7,
         });
         await initCommand.execute(targetPath);
+        console.log(chalk.dim(mc.serveHint));
       } catch (error) {
         console.log();
         console.error(chalk.red(mc.errorPrefix((error as Error).message)));
@@ -79,21 +85,56 @@ program
   .option('--lang <locale>', m.cli.langOption)
   .action(async (targetPath = '.', options?: { force?: boolean; lang?: string }) => {
     const cliLocale = resolveLocale(options?.lang);
-    const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
+    const localeMsgs = cliLocale !== earlyLocale ? getMessages(cliLocale) : m;
+    const mc = localeMsgs.cli;
     try {
+      const resolvedPath = path.resolve(targetPath);
+
       const { InitCommand } = await import('../core/init.js');
       const initCommand = new InitCommand({
         update: true,
         force: options?.force ?? true,
         locale: cliLocale,
       });
-      await initCommand.execute(targetPath);
+      await initCommand.execute(resolvedPath);
       console.log(chalk.green(mc.updateComplete));
+      console.log(chalk.dim(mc.serveHint));
     } catch (error) {
       console.log();
       console.error(chalk.red(mc.errorPrefix((error as Error).message)));
       process.exit(1);
     }
   });
+
+program
+  .command('serve [path]')
+  .description(m.cli.serveCommandDescription)
+  .option('--port <number>', m.cli.portOption, parseInt)
+  .option('--strict-port', m.cli.strictPortOption)
+  .option('--no-open', m.cli.noOpenOption)
+  .option('--lang <locale>', m.cli.langOption)
+  .action(
+    async (
+      targetPath = '.',
+      options?: { port?: number; strictPort?: boolean; open?: boolean; lang?: string },
+    ) => {
+      const cliLocale = resolveLocale(options?.lang);
+      const mc = cliLocale !== earlyLocale ? getMessages(cliLocale).cli : m.cli;
+      try {
+        const { executeServe } = await import('../core/serve.js');
+        await executeServe({
+          targetPath,
+          port: options?.port,
+          strictPort: options?.strictPort,
+          open: options?.open,
+          locale: cliLocale,
+        });
+      } catch (error) {
+        console.log();
+        console.error(chalk.red(mc.errorPrefix((error as Error).message)));
+        process.exit(1);
+      }
+    },
+  );
 
 program.parse();

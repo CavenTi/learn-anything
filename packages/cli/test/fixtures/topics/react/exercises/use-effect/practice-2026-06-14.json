@@ -1,0 +1,11 @@
+{
+  "concept": "use-effect",
+  "date": "2026-06-14",
+  "score": 1,
+  "maxScore": 2,
+  "results": [
+    { "function": "Clock", "passed": true },
+    { "function": "UserFetcher", "passed": false }
+  ],
+  "notes": "Forgot to add the race condition guard (cancelled flag) in UserFetcher."
+}
