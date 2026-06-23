@@ -94,7 +94,7 @@ Create a timestamped quiz ID:
 
 Write files under:
 
-\`./.learn/topics/<topic-name>/exercises/<domain-slug>/<quiz-id>/\`
+\`./.learn/topics/<topic-name>/quizzes/<quiz-id>/\`
 
 ### 4. Write quiz.json
 
@@ -167,7 +167,7 @@ List quiz.md, quiz.json, and answer-key.json. Tell the user to answer in chat, t
 
 ### 1. Locate and Validate Quiz
 
-Find the exact quiz-id under \`./.learn/topics/*/exercises/*/<quiz-id>/\`. Read quiz.json and answer-key.json.
+Find the exact quiz-id under \`./.learn/topics/*/quizzes/<quiz-id>/\`. Read quiz.json and answer-key.json.
 
 Before grading, verify:
 - quiz IDs match
@@ -251,8 +251,8 @@ Supported actions:
 - /learn:quiz generate <concept-or-domain>
 - /learn:quiz grade <quiz-id>
 
-For generate: read state.json, resolve the scope, create quiz.md + quiz.json + answer-key.json, and stop without modifying state.json.
-For grade: locate the quiz, collect answers from chat, write submission.json + assessment.md, update each covered concept according to its own score, then run render.mjs.
+For generate: read state.json, resolve the scope, create quiz.md + quiz.json + answer-key.json under ./.learn/topics/<topic-name>/quizzes/<quiz-id>/, and stop without modifying state.json.
+For grade: locate the quiz under ./.learn/topics/*/quizzes/<quiz-id>/, collect answers from chat, write submission.json + assessment.md, update each covered concept according to its own score, then run render.mjs.
 
 Default generate mode is review: use only touched concepts (\`status !== "unexplored"\`, \`explain_count > 0\`, \`practice_count > 0\`, or \`confidence > 0\`). Use all concepts only when the user explicitly requests diagnostic mode.
 

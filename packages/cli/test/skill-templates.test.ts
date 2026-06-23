@@ -217,6 +217,10 @@ describe('Skill Template Content Quality', () => {
     expect(t.instructions).toContain('submission.json');
     expect(t.instructions).toContain('assessment.md');
     expect(t.instructions).toContain('<domain-slug>-quiz-YYYYMMDD-HHmmss');
+    expect(t.instructions).toContain('./.learn/topics/<topic-name>/quizzes/<quiz-id>/');
+    expect(t.instructions).toContain('./.learn/topics/*/quizzes/<quiz-id>/');
+    expect(t.instructions).not.toContain('exercises/<domain-slug>/<quiz-id>');
+    expect(t.instructions).not.toContain('exercises/*/<quiz-id>');
     expect(t.instructions).toContain('Concept score');
   });
 
