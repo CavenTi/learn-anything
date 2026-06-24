@@ -241,7 +241,7 @@ describe('Skill Template Content Quality', () => {
 
   it('quiz template should keep deck-write independent from state updates and portable', () => {
     const t = getLearnQuizSkillTemplate();
-    expect(t.instructions).toContain('never changes state.json');
+    expect(t.instructions).toContain('do NOT update state.json');
     expect(t.instructions).not.toContain('generate_html.py');
     expect(t.instructions).not.toContain('generate_pdf.py');
     expect(t.instructions).not.toContain('generate_docx.py');
