@@ -30,7 +30,7 @@
 - 🧭 **Choose your own path** — AI generates a knowledge map; you decide what to learn next
 - 🎓 **Recursive learning method** — Recursive explanations that follow your curiosity as deep as you want
 - 🧪 **TDD-style practice** — Write real code with structured feedback, from beginner to challenge
-- 📝 **Adaptive quizzes** — Generate answer-isolated quizzes, then grade them by concept
+- 📝 **Adaptive quizzes** — Quick text Q&A quizzes, graded and saved as reusable question decks
 - 📊 **Spaced repetition** — Smart review that surfaces weak spots when you need them most
 - 🔥 **Knowledge visualization** — Heatmap showing exactly where you stand
 - 🖥️ **Visual Dashboard** — Browse knowledge maps, session notes, and exercises in a rich web interface
@@ -57,14 +57,14 @@ During `init` or `update`, you'll be prompted to enable **Context7** for documen
 
 ### After Init — Six Learning Commands
 
-| Command                             | What it does                                                 |
-| :---------------------------------- | :----------------------------------------------------------- |
-| `/learn:topic <name>`               | Initialize a topic, generate a knowledge map, track progress |
-| `/learn:explain <name>`             | Recursive learning method — go as deep as you want           |
-| `/learn:practice <name>`            | TDD-style coding exercises with structured feedback          |
-| `/learn:review [name]`              | Spaced repetition review with personalized next-step plan    |
-| `/learn:status [name]`              | Knowledge map heatmap — mastery, practice counts, confidence |
-| `/learn:quiz <generate\|grade> ...` | Generate adaptive quizzes or grade submitted answers         |
+| Command                  | What it does                                                 |
+| :----------------------- | :----------------------------------------------------------- |
+| `/learn:topic <name>`    | Initialize a topic, generate a knowledge map, track progress |
+| `/learn:explain <name>`  | Recursive learning method — go as deep as you want           |
+| `/learn:practice <name>` | TDD-style coding exercises with structured feedback          |
+| `/learn:review [name]`   | Spaced repetition review with personalized next-step plan    |
+| `/learn:status [name]`   | Knowledge map heatmap — mastery, practice counts, confidence |
+| `/learn:quiz <name>`     | Quick text Q&A quiz — graded and saved for re-practice       |
 
 ### Visual Learning Dashboard
 
@@ -110,7 +110,8 @@ Your Project/
 │           ├── state.json           # Single source of truth
 │           ├── knowledge-map.md     # Auto-rendered from state.json
 │           ├── sessions/            # Session history for spaced repetition
-│           └── exercises/           # TDD-style coding exercises
+│           ├── exercises/           # TDD-style coding exercises
+│           └── quizzes/             # Reusable text Q&A question decks
 └── ...
 ```
 
