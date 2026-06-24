@@ -33,6 +33,38 @@ export interface StateV1 {
   domains: Domain[];
 }
 
+/** Grading strategy for a quiz question — drives dashboard auto-grading behavior. */
+export type QuestionGradeable = 'exact' | 'accepted' | 'ai_only';
+
+/** Supported quiz question types — text-answer only (coding is handled by /learn:practice). */
+export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_in_blank' | 'error_correction';
+
+/** A single question in a persisted quiz deck (quiz.json v1). */
+export interface QuizQuestion {
+  id: string;
+  type: QuestionType;
+  gradeable: QuestionGradeable;
+  prompt: string;
+  explanation: string;
+  /** multiple_choice only. */
+  options?: string[];
+  /** Canonical/reference answer. multiple_choice: correct option text. true_false: true|false. Otherwise: reference text. */
+  answer: string | boolean;
+  /** fill_in_blank only: accepted alternative phrasings for best-effort auto-grading. */
+  accepted_answers?: string[];
+}
+
+/** A persisted, reusable quiz deck for one concept (quiz.json v1). */
+export interface QuizDeck {
+  version: 1;
+  topic: string;
+  topic_slug: string;
+  concept_slug: string;
+  concept_name: string;
+  created: string; // YYYY-MM-DD HH:mm:ss
+  questions: QuizQuestion[];
+}
+
 /* ------------------------------------------------------------------ */
 /*  v0 types — used only during migration                             */
 /* ------------------------------------------------------------------ */

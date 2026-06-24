@@ -26,7 +26,7 @@ export const zhCN: LocaleMessages = {
     header: '\n🧠 Learn Anything — AI 驱动的递归学习系统\n',
     noToolsSelected: '未选择任何 AI 工具。使用 --tools 参数指定，或在交互模式中选择。',
     availableTools: (tools: string) => `可用的工具：${tools}`,
-    skillGenerated: (toolName: string) => `  ✓ ${toolName} — 5 个技能文件已生成`,
+    skillGenerated: (toolName: string) => `  ✓ ${toolName} — 6 个技能文件已生成`,
     initComplete: '🎉 Learn Anything 初始化完成！\n',
     globalDataPath: (dir: string) => `  学习数据存储在 ${dir}/`,
     startLearning: (example: string) => `  运行 ${example} 开始你的第一个学习主题\n`,

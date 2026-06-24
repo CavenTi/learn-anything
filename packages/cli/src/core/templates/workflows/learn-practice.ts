@@ -1,4 +1,5 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { STATE_UPDATE_TABLE } from './_shared.js';
 
 const SKILL_NAME = 'learn-anything-practice';
 const SKILL_DESCRIPTION =
@@ -126,11 +127,7 @@ The user submits code in chat. Provide feedback using the Feedback Framework bel
 4. **Code quality tips** — if applicable.
 5. **Assess performance** and update state.json (use Edit tool):
 
-| Performance | Criteria | state.json Updates |
-|-------------|----------|--------------------|
-| ✅ Excellent | Code runs correctly, handles edge cases | confidence +0.1~0.15, practice_count +1, last_practiced = today. If confidence > 0.7 AND practice_count ≥ 2 → status mastered |
-| 🟡 Good | Core logic correct, minor issues | confidence +0.05, practice_count +1, last_practiced = today, status → needs_practice |
-| 🔴 Struggling | Code doesn't run or wrong direction | confidence unchanged, status → needs_practice. Guide with questions, don't give answer directly |
+${STATE_UPDATE_TABLE}
 
 ### Session Recording
 

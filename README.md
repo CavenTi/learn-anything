@@ -25,11 +25,12 @@
 
 ## What is Learn Anything?
 
-**Learn Anything** generates skill and command files for **30+ AI coding tools** — Claude Code, Cursor, Codex, OpenCode, and more. Once generated, your AI assistant gains five slash commands that guide you through systematically mastering any technical topic:
+**Learn Anything** generates skill and command files for **30+ AI coding tools** — Claude Code, Cursor, Codex, OpenCode, and more. Once generated, your AI assistant gains six slash commands that guide you through systematically mastering any technical topic:
 
 - 🧭 **Choose your own path** — AI generates a knowledge map; you decide what to learn next
 - 🎓 **Recursive learning method** — Recursive explanations that follow your curiosity as deep as you want
 - 🧪 **TDD-style practice** — Write real code with structured feedback, from beginner to challenge
+- 📝 **Adaptive quizzes** — Generate answer-isolated quizzes, then grade them by concept
 - 📊 **Spaced repetition** — Smart review that surfaces weak spots when you need them most
 - 🔥 **Knowledge visualization** — Heatmap showing exactly where you stand
 - 🖥️ **Visual Dashboard** — Browse knowledge maps, session notes, and exercises in a rich web interface
@@ -54,15 +55,16 @@ During `init` or `update`, you'll be prompted to enable **Context7** for documen
 
 > **Setup:** Run `npx ctx7 setup` or visit the [Context7 docs](https://context7.com/docs/resources/all-clients) for your AI tool.
 
-### After Init — Five Learning Commands
+### After Init — Six Learning Commands
 
-| Command                  | What it does                                                 |
-| :----------------------- | :----------------------------------------------------------- |
-| `/learn:topic <name>`    | Initialize a topic, generate a knowledge map, track progress |
-| `/learn:explain <name>`  | Recursive learning method — go as deep as you want           |
-| `/learn:practice <name>` | TDD-style coding exercises with structured feedback          |
-| `/learn:review [name]`   | Spaced repetition review with personalized next-step plan    |
-| `/learn:status [name]`   | Knowledge map heatmap — mastery, practice counts, confidence |
+| Command                             | What it does                                                 |
+| :---------------------------------- | :----------------------------------------------------------- |
+| `/learn:topic <name>`               | Initialize a topic, generate a knowledge map, track progress |
+| `/learn:explain <name>`             | Recursive learning method — go as deep as you want           |
+| `/learn:practice <name>`            | TDD-style coding exercises with structured feedback          |
+| `/learn:review [name]`              | Spaced repetition review with personalized next-step plan    |
+| `/learn:status [name]`              | Knowledge map heatmap — mastery, practice counts, confidence |
+| `/learn:quiz <generate\|grade> ...` | Generate adaptive quizzes or grade submitted answers         |
 
 ### Visual Learning Dashboard
 

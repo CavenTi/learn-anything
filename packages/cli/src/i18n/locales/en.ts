@@ -28,7 +28,7 @@ export const en: LocaleMessages = {
     noToolsSelected:
       'No AI tools selected. Use --tools option to specify, or select in interactive mode.',
     availableTools: (tools: string) => `Available tools: ${tools}`,
-    skillGenerated: (toolName: string) => `  ✓ ${toolName} — 5 skill files generated`,
+    skillGenerated: (toolName: string) => `  ✓ ${toolName} — 6 skill files generated`,
     initComplete: '🎉 Learn Anything initialization complete!\n',
     globalDataPath: (dir: string) => `  Learning data stored at ${dir}/`,
     startLearning: (example: string) => `  Run ${example} to start your first learning topic\n`,

@@ -195,6 +195,124 @@ export function validateStateV1(data: unknown): ValidationError[] {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Inline quiz deck types + validation                               */
+/* ------------------------------------------------------------------ */
+
+export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_in_blank' | 'error_correction';
+
+export type QuestionGradeable = 'exact' | 'accepted' | 'ai_only';
+
+export interface QuizQuestion {
+  id: string;
+  type: QuestionType;
+  gradeable: QuestionGradeable;
+  prompt: string;
+  explanation: string;
+  options?: string[];
+  answer: string | boolean;
+  accepted_answers?: string[];
+}
+
+export interface QuizDeck {
+  version: 1;
+  topic: string;
+  topic_slug: string;
+  concept_slug: string;
+  concept_name: string;
+  created: string;
+  questions: QuizQuestion[];
+}
+
+const strOrBool: Checker = (v) =>
+  typeof v !== 'string' && typeof v !== 'boolean' ? 'Must be a string or boolean' : null;
+
+const optArr =
+  (itemChecker?: Checker): Checker =>
+  (v) =>
+    v === undefined ? null : arr(itemChecker)(v);
+
+const DECK_RULES: Record<string, Checker> = {
+  version: literal(1),
+  topic: str(),
+  topic_slug: str(),
+  concept_slug: str(),
+  concept_name: str(),
+  created: dateStr,
+  questions: arr(),
+};
+
+const QUESTION_RULES: Record<string, Checker> = {
+  id: str(),
+  type: oneOf('multiple_choice', 'true_false', 'fill_in_blank', 'error_correction'),
+  gradeable: oneOf('exact', 'accepted', 'ai_only'),
+  prompt: str(),
+  explanation: str(),
+  options: optArr(str()),
+  answer: strOrBool,
+  accepted_answers: optArr(str()),
+};
+
+const TYPE_GRADEABLE: Record<string, string> = {
+  multiple_choice: 'exact',
+  true_false: 'exact',
+  fill_in_blank: 'accepted',
+  error_correction: 'ai_only',
+};
+
+export function validateQuizDeck(data: unknown): ValidationError[] {
+  if (data === null || typeof data !== 'object' || Array.isArray(data))
+    return [{ path: '', message: 'Expected a non-null object' }];
+
+  const errors: ValidationError[] = [];
+  checkFields(data, DECK_RULES, '', errors);
+
+  const questions = (data as Record<string, unknown>).questions;
+  if (Array.isArray(questions)) {
+    for (const [qi, q] of questions.entries()) {
+      const qp = `questions[${qi}]`;
+      checkFields(q, QUESTION_RULES, qp, errors);
+
+      const rec = q as Record<string, unknown>;
+      const type = rec.type;
+      const gradeable = rec.gradeable;
+      if (typeof type === 'string' && type in TYPE_GRADEABLE) {
+        const expected = TYPE_GRADEABLE[type];
+        if (gradeable !== expected)
+          errors.push({
+            path: `${qp}.gradeable`,
+            message: `Must be "${expected}" for type "${type}"`,
+          });
+        if (type === 'multiple_choice') {
+          const opts = rec.options;
+          if (!Array.isArray(opts) || opts.length < 2)
+            errors.push({
+              path: `${qp}.options`,
+              message: 'multiple_choice requires options[] with at least 2 items',
+            });
+        }
+        if (type === 'true_false') {
+          if (typeof rec.answer !== 'boolean')
+            errors.push({
+              path: `${qp}.answer`,
+              message: 'true_false answer must be a boolean',
+            });
+        }
+        if (type === 'fill_in_blank') {
+          const acc = rec.accepted_answers;
+          if (!Array.isArray(acc) || acc.length < 1)
+            errors.push({
+              path: `${qp}.accepted_answers`,
+              message: 'fill_in_blank requires accepted_answers[] with at least 1 item',
+            });
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
