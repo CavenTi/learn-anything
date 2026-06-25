@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-06-25
+
+### Added
+
+- **Quiz card practice UI**: Interactive quiz modal with keyboard shortcuts, card slide transitions, and 4 question-type renderers (multiple choice, true/false, fill-in-blank, error correction).
+- **Quiz results & summary views**: Per-question grading feedback with explanations, multi-group score breakdown with progress bars.
+- **Multi-group queue mode**: Sequential and shuffled batch quiz across concept groups, with per-group retry and aggregate summary.
+- **Sidebar quiz tree**: New sidebar tab listing quizzes grouped by concept, with one-click single-deck launch and batch sequential/random buttons.
+- **Quiz test fixtures**: 6 quiz.json files across JavaScript, Python, and React topics covering all 4 question types.
+
+### Changed
+
+- **READMEs synced with quiz workflow**: Both the English and Chinese READMEs now document the single-flow `/learn:quiz <name>` command (replacing the stale `<generate|grade>` two-stage syntax) and include the new `quizzes/` directory in the project structure tree.
+- **CSS design tokens**: Added `--color-mastered-rgb` and `--color-brand-2-rgb` for alpha transparency support in composable styles.
+
 ## [1.4.0] - 2026-06-24
 
 ### Added
@@ -229,7 +244,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.2...v1.4.0
 [1.3.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.0...v1.3.1
