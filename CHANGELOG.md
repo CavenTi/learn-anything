@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.2] - 2026-06-26
+
+### Fixed
+
+- Fixed 404 errors for all API routes when topic directories have non-ASCII (e.g. Chinese) names: `/api/topics/:slug`, `/api/quizzes/:topic/:restPath`, and static file serving now properly decode `pathname` before filesystem resolution. Also added `encodeURIComponent` in `useTopicData.ts` for consistency with other frontend fetch calls.
+
 ## [1.5.1] - 2026-06-26
 
 ### Fixed
@@ -250,7 +256,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.2...HEAD
+[1.5.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.3.2...v1.4.0
