@@ -10,74 +10,33 @@
 /* ================================================================== */
 
 import { ref } from 'vue';
+import type {
+  StateV1,
+  TopicSummary,
+  SessionFile,
+  ExerciseFile,
+  ExerciseGroup,
+} from './topicDataTypes';
+import { createSSEListener } from './useSSE';
+import { clearFileContentCache, setFileContent } from './fileContentCache';
 
 /* ------------------------------------------------------------------ */
-/*  Types                                                             */
+/*  Types (re-exported for consumers)                                 */
 /* ------------------------------------------------------------------ */
 
-export type ConceptStatus = 'mastered' | 'in_progress' | 'needs_practice' | 'unexplored';
+export type {
+  ConceptStatus,
+  Concept,
+  Domain,
+  StateV1,
+  TopicSummary,
+  SessionFile,
+  ExerciseFile,
+  ExerciseGroup,
+  SelectedFilePayload,
+} from './topicDataTypes';
 
-export interface Concept {
-  name: string;
-  slug: string;
-  status: ConceptStatus;
-  confidence: number;
-  practice_count: number;
-  explain_count: number;
-  last_explained: string | null;
-  last_practiced: string | null;
-  details: string[];
-}
-
-export interface Domain {
-  name: string;
-  slug: string;
-  concepts: Concept[];
-}
-
-export interface StateV1 {
-  version: 1;
-  topic: string;
-  slug: string;
-  created: string;
-  domains: Domain[];
-}
-
-export interface TopicSummary {
-  slug: string;
-  name: string;
-  domainCount: number;
-  totalConcepts: number;
-  masteredCount: number;
-  percentage: number;
-}
-
-export interface SessionFile {
-  filename: string;
-  path: string;
-}
-
-export interface ExerciseFile {
-  name: string;
-  path: string;
-}
-
-export interface ExerciseGroup {
-  conceptSlug: string;
-  conceptName: string;
-  files: ExerciseFile[];
-}
-
-export interface SelectedFilePayload {
-  path: string;
-  type: 'markdown' | 'code';
-  sourceTab?: 'topics' | 'exercises' | 'quizzes';
-  /**
-   * Filled in asynchronously after the file content loads.
-   * The selection itself (path/type) is available synchronously.
-   */
-  content?: string;
-}
+export { loadFileContent, loadSessionContent, loadExerciseContent } from './fileContentCache';
 
 /* ------------------------------------------------------------------ */
 /*  In-memory indexes (populated by initTopicData)                     */
@@ -93,7 +52,6 @@ const sessionsBySlug = new Map<string, Map<string, SessionFile[]>>();
 const exerciseGroupsBySlug = new Map<string, ExerciseGroup[]>();
 const orphanSessionsBySlug = new Map<string, SessionFile[]>();
 const orphanExercisesBySlug = new Map<string, ExerciseFile[]>();
-const fileContents = new Map<string, string>();
 
 let topicSummaryCache: TopicSummary[] | null = null;
 
@@ -102,8 +60,6 @@ const dataVersion = ref(0);
 export function getDataVersion(): number {
   return dataVersion.value;
 }
-
-const FILE_CACHE_MAX = 200;
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -119,7 +75,7 @@ function clearIndexes() {
   exerciseGroupsBySlug.clear();
   orphanSessionsBySlug.clear();
   orphanExercisesBySlug.clear();
-  fileContents.clear();
+  clearFileContentCache();
   topicSummaryCache = null;
 }
 
@@ -153,7 +109,7 @@ export function __injectTestData(data: {
     orphanSessionsBySlug.set(slug, files);
   for (const [slug, files] of Object.entries(data.orphanExercises))
     orphanExercisesBySlug.set(slug, files);
-  for (const [path, content] of Object.entries(data.fileContents)) fileContents.set(path, content);
+  for (const [path, content] of Object.entries(data.fileContents)) setFileContent(path, content);
   ready = true;
 }
 
@@ -247,52 +203,13 @@ export async function initTopicData(): Promise<void> {
 /* ------------------------------------------------------------------ */
 
 export function listenForChanges(callback: () => void): () => void {
-  let src: EventSource | null = null;
-  let stopped = false;
-  let retryDelay = 1000;
-  let reconnecting = false;
-  const MAX_RETRY_DELAY = 30000;
-
-  function handleReload() {
+  return createSSEListener('/api/events', () => {
     clearIndexes();
     initTopicData().then(() => {
       dataVersion.value++;
       callback();
     });
-  }
-
-  function connect() {
-    if (stopped) return;
-    src = new EventSource('/api/events');
-    src.addEventListener('message', (e) => {
-      if (e.data === 'reload') {
-        retryDelay = 1000;
-        handleReload();
-      }
-    });
-    src.addEventListener('open', () => {
-      retryDelay = 1000;
-      if (reconnecting) {
-        reconnecting = false;
-        handleReload();
-      }
-    });
-    src.onerror = () => {
-      reconnecting = true;
-      src?.close();
-      src = null;
-      if (!stopped) {
-        setTimeout(connect, retryDelay);
-        retryDelay = Math.min(retryDelay * 2, MAX_RETRY_DELAY);
-      }
-    };
-  }
-
-  connect();
-  return () => {
-    stopped = true;
-    src?.close();
-  };
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -331,23 +248,3 @@ export function scanRootSessions(slug: string): SessionFile[] {
 export function scanRootExercises(slug: string): ExerciseFile[] {
   return orphanExercisesBySlug.get(slug) ?? [];
 }
-
-export async function loadFileContent(path: string): Promise<string | null> {
-  if (fileContents.has(path)) return fileContents.get(path)!;
-  try {
-    const resp = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
-    if (!resp.ok) return null;
-    const text = await resp.text();
-    if (fileContents.size >= FILE_CACHE_MAX) {
-      const oldest = fileContents.keys().next().value;
-      if (oldest) fileContents.delete(oldest);
-    }
-    fileContents.set(path, text);
-    return text;
-  } catch {
-    return null;
-  }
-}
-
-export const loadSessionContent = loadFileContent;
-export const loadExerciseContent = loadFileContent;
