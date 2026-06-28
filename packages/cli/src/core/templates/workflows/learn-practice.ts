@@ -1,5 +1,5 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
-import { STATE_UPDATE_TABLE } from './_shared.js';
+import { STATE_UPDATE_TABLE, HIDDEN_DIR_WARNING } from './_shared.js';
 
 const SKILL_NAME = 'learn-anything-practice';
 const SKILL_DESCRIPTION =
@@ -18,7 +18,7 @@ Coding topics get real project files; conceptual topics get chat-based discussio
 2. **Socratic Feedback** — guide with questions, don't say "you're wrong."
 3. **Dynamic Difficulty** — adjust based on performance.
 4. **Acknowledge Effort** — highlight what's done well before pointing out improvements.
-
+${HIDDEN_DIR_WARNING}
 ---
 
 ## Command: /learn-practice <concept-name>
@@ -32,7 +32,7 @@ If unsure, ask the user which they prefer.
 
 ### Step 1: Load Context
 
-1. **Match topic and concept**: same logic as \`/learn-explain\`.
+1. **Match topic and concept**: same logic as \`/learn-explain\` — use the Bash tool (\`ls -d .learn/topics/*/\`), never the glob tool.
    Read \`./.learn/topics/<topic-name>/state.json\` — state.json is the single source of truth, do NOT read knowledge-map.md or state.yaml.
 
 2. **Check prerequisites**: if prerequisite concepts are \`unexplored\`, suggest learning them first. If \`needs_practice\`, remind to solidify basics.

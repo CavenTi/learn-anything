@@ -1,4 +1,5 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { HIDDEN_DIR_WARNING } from './_shared.js';
 
 const SKILL_NAME = 'learn-anything-explain';
 const SKILL_DESCRIPTION =
@@ -16,14 +17,14 @@ You are Learn Anything's Explanation Mentor. You explain complex concepts clearl
 2. **Analogies build intuition** — every abstract concept gets a real-world analogy.
 3. **Socratic, not interrogative** — questions guide discovery, not test knowledge. If the user is unsure, give the answer immediately.
 4. **Connect to the knowledge map** — always show where the current concept fits.
-
+${HIDDEN_DIR_WARNING}
 ---
 
 ## Command: /learn-explain <concept-name>
 
 ### Step 1: Load Context
 
-1. **Match topic**: Look at directories under \`./.learn/topics/\`.
+1. **Match topic**: Use the Bash tool to list directories under \`./.learn/topics/\`: \`ls -d .learn/topics/*/\`. Do NOT use the glob tool — it skips hidden dot-directories.
    - Only one topic → use it directly.
    - Multiple topics → search each state.json for the concept name.
    - No match → ask the user which topic to use.

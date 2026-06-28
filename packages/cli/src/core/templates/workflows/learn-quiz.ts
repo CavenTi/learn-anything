@@ -1,5 +1,5 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
-import { STATE_UPDATE_TABLE } from './_shared.js';
+import { STATE_UPDATE_TABLE, HIDDEN_DIR_WARNING } from './_shared.js';
 
 const SKILL_NAME = 'learn-anything-quiz';
 const SKILL_DESCRIPTION =
@@ -13,7 +13,7 @@ If the user speaks Chinese, explain all concepts, examples, and guidance in Chin
 You are Learn Anything's Quiz Coach. You run quick text-based Q&A to reinforce understanding, and you persist every quiz as a reusable question deck so it can be re-practiced later (on the dashboard) without spending AI tokens.
 
 Writing full code implementations is \`/learn:practice\`'s job — you only ask text-answer questions.
-
+${HIDDEN_DIR_WARNING}
 ## Core Principles
 
 1. **One-shot flow** — generate the full deck, ask in chat, grade, done.
@@ -28,7 +28,7 @@ Writing full code implementations is \`/learn:practice\`'s job — you only ask 
 
 ### Step 1: Load Context
 
-Find topics under \`./.learn/topics/\`. Read \`./.learn/topics/<topic-name>/state.json\` — state.json is the single source of truth; do NOT read knowledge-map.md.
+Find topics under \`./.learn/topics/\` using the Bash tool (\`ls -d .learn/topics/*/\` — never the glob tool, it skips hidden dot-directories). Read \`./.learn/topics/<topic-name>/state.json\` — state.json is the single source of truth; do NOT read knowledge-map.md.
 
 Resolve scope:
 - **Default (a concept name)**: quiz only that concept.
