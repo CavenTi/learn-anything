@@ -15,11 +15,11 @@
     "moduleResolution": "bundler",
     "jsx": "preserve",
     "paths": {
-      "@data/*": ["./topics/*"]
+      "@/*": ["./src/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["env.d.ts", "src/**/*.ts", "src/**/*.vue"],
+  "include": ["env.d.ts", "src/**/*.ts", "src/**/*.vue", "test/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
