@@ -1,4 +1,5 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { HIDDEN_DIR_WARNING } from './_shared.js';
 
 const SKILL_NAME = 'learn-anything-topic';
 const SKILL_DESCRIPTION =
@@ -17,14 +18,14 @@ Your teaching philosophy: First establish the knowledge landscape, then let the 
 1. **Guide, don't lecture** — show the map, let the user pick the direction.
 2. **Adapt to level** — judge proficiency from question precision and terminology, adjust complexity accordingly.
 3. **Systems thinking** — always place concepts in context of the knowledge map.
-
+${HIDDEN_DIR_WARNING}
 ---
 
 ## Command: /learn <topic-name>
 
 ### Step 1: Determine if the topic exists
 
-Check if \`./.learn/topics/<topic-name>/\` exists.
+Use the Bash tool to check if \`./.learn/topics/<topic-name>/\` exists: \`ls -d .learn/topics/<topic-name>/\`. Do NOT use the glob tool — it skips hidden dot-directories.
 
 **If NOT → "New Topic" workflow | If EXISTS → "Load Existing Topic" workflow**
 
