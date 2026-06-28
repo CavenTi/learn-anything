@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.4] - 2026-06-29
+
+### Changed
+
+- Refactored `packages/cli/site`: split large files into focused modules — `useQuiz.ts` (398 lines) split into `types.ts`, `quizApi.ts`, `grading.ts`, `useQuizQueue.ts`, `useQuizSession.ts`; extracted shared `utils/highlight.ts` and `utils/slug.ts`; extracted `fileContentCache.ts` from `useTopicData.ts`; extracted `useSearchLauncher` composable (⌘K hotkey + search-select routing) from `App.vue`; moved `Dashboard.vue` and `TopicPage.vue` into a `views/` directory.
+- Configured `@/*` path alias (tsconfig + vite) and migrated all `../` relative imports to `@/`.
+- Split `QuizModal.vue` into `QuizLoadingView` and `QuizPlayView`; split sidebar, content, and search components into single-responsibility files.
+
+### Fixed
+
+- Fixed file content cache using FIFO eviction instead of LRU — cache hits now re-insert the entry as most-recently-used.
+- Fixed ⌘K (Cmd/Ctrl-K) search hotkey activating while focus is in an input, textarea, or contentEditable element.
+- Prevented default space-key scrolling while a quiz modal is open.
+
 ## [1.5.3] - 2026-06-26
 
 ### Fixed
@@ -262,7 +276,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.3...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.4...HEAD
+[1.5.4]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.0...v1.5.1
