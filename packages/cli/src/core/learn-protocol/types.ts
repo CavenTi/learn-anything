@@ -37,7 +37,12 @@ export interface StateV1 {
 export type QuestionGradeable = 'exact' | 'accepted' | 'ai_only';
 
 /** Supported quiz question types — text-answer only (coding is handled by /learn:practice). */
-export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_in_blank' | 'error_correction';
+export type QuestionType =
+  | 'multiple_choice'
+  | 'multi_select'
+  | 'true_false'
+  | 'fill_in_blank'
+  | 'error_correction';
 
 /** A single question in a persisted quiz deck (quiz.json v1). */
 export interface QuizQuestion {
@@ -46,10 +51,10 @@ export interface QuizQuestion {
   gradeable: QuestionGradeable;
   prompt: string;
   explanation: string;
-  /** multiple_choice only. */
+  /** multiple_choice / multi_select only. */
   options?: string[];
-  /** Canonical/reference answer. multiple_choice: correct option text. true_false: true|false. Otherwise: reference text. */
-  answer: string | boolean;
+  /** Canonical/reference answer. multiple_choice: correct option text. multi_select: correct option texts (string[]). true_false: true|false. Otherwise: reference text. */
+  answer: string | boolean | string[];
   /** fill_in_blank only: accepted alternative phrasings for best-effort auto-grading. */
   accepted_answers?: string[];
 }

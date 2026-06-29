@@ -40,6 +40,7 @@ onBeforeUnmount(() => {
     >
       <p class="text-xs font-medium text-text-2">{{ t('quiz.helpTitle') }}</p>
       <p class="text-xs text-text-3">{{ t('quiz.hintChoice') }}</p>
+      <p class="text-xs text-text-3">{{ t('quiz.hintMultiSelect') }}</p>
       <p class="text-xs text-text-3">{{ t('quiz.hintTrueFalse') }}</p>
       <p class="text-xs text-text-3">{{ t('quiz.hintNav') }}</p>
       <p class="text-xs text-text-3">

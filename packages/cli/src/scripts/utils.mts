@@ -198,7 +198,12 @@ export function validateStateV1(data: unknown): ValidationError[] {
 /*  Inline quiz deck types + validation                               */
 /* ------------------------------------------------------------------ */
 
-export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_in_blank' | 'error_correction';
+export type QuestionType =
+  | 'multiple_choice'
+  | 'multi_select'
+  | 'true_false'
+  | 'fill_in_blank'
+  | 'error_correction';
 
 export type QuestionGradeable = 'exact' | 'accepted' | 'ai_only';
 
@@ -209,7 +214,7 @@ export interface QuizQuestion {
   prompt: string;
   explanation: string;
   options?: string[];
-  answer: string | boolean;
+  answer: string | boolean | string[];
   accepted_answers?: string[];
 }
 
@@ -223,8 +228,10 @@ export interface QuizDeck {
   questions: QuizQuestion[];
 }
 
-const strOrBool: Checker = (v) =>
-  typeof v !== 'string' && typeof v !== 'boolean' ? 'Must be a string or boolean' : null;
+const strOrBoolOrArr: Checker = (v) =>
+  typeof v !== 'string' && typeof v !== 'boolean' && !Array.isArray(v)
+    ? 'Must be a string, boolean, or string array'
+    : null;
 
 const optArr =
   (itemChecker?: Checker): Checker =>
@@ -243,17 +250,18 @@ const DECK_RULES: Record<string, Checker> = {
 
 const QUESTION_RULES: Record<string, Checker> = {
   id: str(),
-  type: oneOf('multiple_choice', 'true_false', 'fill_in_blank', 'error_correction'),
+  type: oneOf('multiple_choice', 'multi_select', 'true_false', 'fill_in_blank', 'error_correction'),
   gradeable: oneOf('exact', 'accepted', 'ai_only'),
   prompt: str(),
   explanation: str(),
   options: optArr(str()),
-  answer: strOrBool,
+  answer: strOrBoolOrArr,
   accepted_answers: optArr(str()),
 };
 
 const TYPE_GRADEABLE: Record<string, string> = {
   multiple_choice: 'exact',
+  multi_select: 'exact',
   true_false: 'exact',
   fill_in_blank: 'accepted',
   error_correction: 'ai_only',
@@ -289,6 +297,28 @@ export function validateQuizDeck(data: unknown): ValidationError[] {
               path: `${qp}.options`,
               message: 'multiple_choice requires options[] with at least 2 items',
             });
+        }
+        if (type === 'multi_select') {
+          const opts = rec.options;
+          if (!Array.isArray(opts) || opts.length < 2)
+            errors.push({
+              path: `${qp}.options`,
+              message: 'multi_select requires options[] with at least 2 items',
+            });
+          if (!Array.isArray(rec.answer) || rec.answer.length < 2)
+            errors.push({
+              path: `${qp}.answer`,
+              message: 'multi_select answer must be a string array with at least 2 items',
+            });
+          if (Array.isArray(opts) && Array.isArray(rec.answer)) {
+            for (const [ai, a] of rec.answer.entries()) {
+              if (typeof a !== 'string' || !opts.includes(a))
+                errors.push({
+                  path: `${qp}.answer[${ai}]`,
+                  message: `Answer "${String(a)}" is not in options[]`,
+                });
+            }
+          }
         }
         if (type === 'true_false') {
           if (typeof rec.answer !== 'boolean')

@@ -36,6 +36,23 @@
         "A single resolved value combining all results"
       ],
       "answer": "An array of {status, value/reason} for every promise"
+    },
+    {
+      "id": "q4",
+      "type": "multi_select",
+      "gradeable": "exact",
+      "prompt": "Which of the following are valid Promise instance methods?",
+      "explanation": ".then(), .catch(), and .finally() are instance methods. Promise.all() is a static method on the Promise constructor.",
+      "options": [".then()", ".catch()", ".finally()", ".all()"],
+      "answer": [".then()", ".catch()", ".finally()"]
+    },
+    {
+      "id": "q5",
+      "type": "error_correction",
+      "gradeable": "ai_only",
+      "prompt": "找出以下代码中的错误并修正：\n\nfetch('/api/data')\n  .then(res => res.json())\n  .then(data => console.log(data))\n  .catch(err => console.log(err))\n  .finally(() => console.log('Done'));",
+      "explanation": "这段代码本身没有语法错误。但如果想要在 .then() 链中正确处理 HTTP 错误状态码，需要检查 res.ok，因为 fetch 只在网络请求失败时才 reject，HTTP 4xx/5xx 不会自动触发 .catch()。",
+      "answer": "应在第一个 .then() 中检查 res.ok，例如：if (!res.ok) throw new Error(res.statusText);"
     }
   ]
 }
