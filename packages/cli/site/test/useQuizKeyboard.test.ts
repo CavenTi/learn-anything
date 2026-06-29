@@ -122,6 +122,40 @@ describe('resolveQuizKey — multiple-choice shortcuts', () => {
 });
 
 /* ================================================================== */
+/*  Answer shortcuts — multi select                                    */
+/* ================================================================== */
+
+describe('resolveQuizKey — multi-select shortcuts', () => {
+  const q = makeQuestion({
+    type: 'multi_select',
+    options: ['A', 'B', 'C'],
+    answer: ['A', 'C'],
+  });
+
+  it('maps uppercase letters to toggle actions', () => {
+    expect(resolveQuizKey(key('A'), ctx({ question: q }))).toEqual({ type: 'toggle', option: 'A' });
+    expect(resolveQuizKey(key('C'), ctx({ question: q }))).toEqual({ type: 'toggle', option: 'C' });
+  });
+
+  it('maps lowercase letters to toggle actions', () => {
+    expect(resolveQuizKey(key('a'), ctx({ question: q }))).toEqual({ type: 'toggle', option: 'A' });
+  });
+
+  it('maps digits to toggle actions', () => {
+    expect(resolveQuizKey(key('1'), ctx({ question: q }))).toEqual({ type: 'toggle', option: 'A' });
+    expect(resolveQuizKey(key('3'), ctx({ question: q }))).toEqual({ type: 'toggle', option: 'C' });
+  });
+
+  it('returns null for a letter beyond the options', () => {
+    expect(resolveQuizKey(key('D'), ctx({ question: q }))).toBeNull();
+  });
+
+  it('is ignored while typing in a TEXTAREA', () => {
+    expect(resolveQuizKey(key('A'), ctx({ question: q, targetTag: 'TEXTAREA' }))).toBeNull();
+  });
+});
+
+/* ================================================================== */
 /*  Navigation                                                         */
 /* ================================================================== */
 

@@ -2,14 +2,15 @@
 import { computed } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import type { QuizQuestion } from './types';
+import { toggleMultiSelect } from './utils';
 
 const props = defineProps<{
   question: QuizQuestion;
-  modelValue: string | boolean | null;
+  modelValue: string | boolean | string[] | null;
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | boolean | null];
+  'update:modelValue': [value: string | boolean | string[] | null];
 }>();
 
 const { t } = useI18n();
@@ -18,6 +19,8 @@ const typeLabel = computed(() => {
   switch (props.question.type) {
     case 'multiple_choice':
       return t('quiz.typeMultipleChoice');
+    case 'multi_select':
+      return t('quiz.typeMultiSelect');
     case 'true_false':
       return t('quiz.typeTrueFalse');
     case 'fill_in_blank':
@@ -37,6 +40,16 @@ const optionKeys = computed(() => options.value.map((_, i) => String.fromCharCod
 
 function selectOption(option: string) {
   emit('update:modelValue', option);
+}
+
+/* ---- multi select helpers ---- */
+
+function isOptionSelected(option: string): boolean {
+  return Array.isArray(props.modelValue) && props.modelValue.includes(option);
+}
+
+function toggleOption(option: string) {
+  emit('update:modelValue', toggleMultiSelect(props.modelValue, option));
 }
 
 /* ---- true / false helpers ---- */
@@ -86,6 +99,45 @@ function onTextInput(e: Event) {
           "
         >
           {{ optionKeys[i] ?? i + 1 }}
+        </span>
+        <span class="whitespace-pre-wrap break-words text-sm leading-relaxed">{{ option }}</span>
+      </button>
+    </div>
+
+    <!-- ── Multi select ────────────────────────────────── -->
+    <div v-else-if="question.type === 'multi_select'" class="space-y-2.5">
+      <button
+        v-for="(option, i) in options"
+        :key="i"
+        class="flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all cursor-pointer"
+        :class="
+          isOptionSelected(option)
+            ? 'border-brand-2 bg-brand-soft text-text-1'
+            : 'border-(--color-divider) text-text-2 hover:border-brand-3 hover:bg-(--color-bg-soft)'
+        "
+        @click="toggleOption(option)"
+      >
+        <span
+          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 text-xs font-semibold transition-colors"
+          :class="
+            isOptionSelected(option)
+              ? 'border-brand-2 bg-brand-2 text-white'
+              : 'border-border text-text-3'
+          "
+        >
+          <svg
+            v-if="isOptionSelected(option)"
+            class="h-3.5 w-3.5"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 8l3.5 3.5L13 4.5" />
+          </svg>
+          <template v-else>{{ optionKeys[i] ?? i + 1 }}</template>
         </span>
         <span class="whitespace-pre-wrap break-words text-sm leading-relaxed">{{ option }}</span>
       </button>

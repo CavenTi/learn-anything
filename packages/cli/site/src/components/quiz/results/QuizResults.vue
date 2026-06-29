@@ -24,6 +24,7 @@ function formatAnswer(answer: QuizAnswer): string {
   if (answer === true) return t('quiz.true');
   if (answer === false) return t('quiz.false');
   if (answer === null || answer === '') return '—';
+  if (Array.isArray(answer)) return answer.join(', ');
   return String(answer);
 }
 </script>

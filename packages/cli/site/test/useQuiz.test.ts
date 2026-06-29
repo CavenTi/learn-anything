@@ -157,6 +157,44 @@ describe('gradeQuestion', () => {
     });
   });
 
+  /* ---- exact (multi_select array) ---- */
+  describe('gradeable: exact (multi_select)', () => {
+    const q = makeQuestion({
+      gradeable: 'exact',
+      type: 'multi_select',
+      options: ['A', 'B', 'C', 'D'],
+      answer: ['A', 'C'],
+    });
+
+    it('returns true when selection matches exactly', () => {
+      expect(gradeQuestion(q, ['A', 'C'])).toBe(true);
+    });
+
+    it('returns true regardless of selection order', () => {
+      expect(gradeQuestion(q, ['C', 'A'])).toBe(true);
+    });
+
+    it('returns false when selection is a subset (missing one)', () => {
+      expect(gradeQuestion(q, ['A'])).toBe(false);
+    });
+
+    it('returns false when selection has an extra wrong option', () => {
+      expect(gradeQuestion(q, ['A', 'C', 'D'])).toBe(false);
+    });
+
+    it('returns false when selection is completely wrong', () => {
+      expect(gradeQuestion(q, ['B', 'D'])).toBe(false);
+    });
+
+    it('returns false when answer is null', () => {
+      expect(gradeQuestion(q, null)).toBe(false);
+    });
+
+    it('returns false when answer is empty array', () => {
+      expect(gradeQuestion(q, [])).toBe(false);
+    });
+  });
+
   /* ---- accepted ---- */
   describe('gradeable: accepted (fill_in_blank)', () => {
     const q = makeQuestion({

@@ -24,7 +24,7 @@ export interface QuizListResponse {
   groups: QuizGroup[];
 }
 
-export type QuizAnswer = string | boolean | null;
+export type QuizAnswer = string | boolean | string[] | null;
 export type QuizAnswers = Record<string, QuizAnswer>;
 
 export interface QuestionResult {
