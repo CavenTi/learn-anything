@@ -60,7 +60,7 @@ function onTextInput(e: Event) {
     </p>
 
     <!-- Question prompt -->
-    <p class="mb-8 text-lg leading-relaxed font-medium text-text-1">
+    <p class="mb-8 whitespace-pre-wrap break-words text-lg leading-relaxed font-medium text-text-1">
       {{ question.prompt }}
     </p>
 
@@ -87,7 +87,7 @@ function onTextInput(e: Event) {
         >
           {{ optionKeys[i] ?? i + 1 }}
         </span>
-        <span class="text-sm leading-relaxed">{{ option }}</span>
+        <span class="whitespace-pre-wrap break-words text-sm leading-relaxed">{{ option }}</span>
       </button>
     </div>
 

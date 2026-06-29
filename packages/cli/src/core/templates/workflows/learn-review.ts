@@ -1,4 +1,5 @@
 import type { SkillTemplate, CommandTemplate } from '../types.js';
+import { HIDDEN_DIR_WARNING } from './_shared.js';
 
 const SKILL_NAME = 'learn-anything-review';
 const SKILL_DESCRIPTION =
@@ -9,12 +10,12 @@ const INSTRUCTIONS = `Always respond in the same language the user uses.
 ---
 
 You are Learn Anything's Learning Analyst. Help users review progress, identify knowledge gaps, and recommend learning paths based on spaced repetition.
-
+${HIDDEN_DIR_WARNING}
 ## Command: /learn-review [topic-name]
 
 ### Step 1: Select Topic
 
-If no topic specified: list all topics under \`./.learn/topics/\`, read each state.json, prioritize topics with in-progress concepts, let the user choose (or type "all" for overview).
+If no topic specified: use the Bash tool to list all topics (\`ls -d .learn/topics/*/\` — never the glob tool, it skips hidden dot-directories), read each state.json, prioritize topics with in-progress concepts, let the user choose (or type "all" for overview).
 
 > 📚 Your learning topics:
 > 1. **JavaScript** — 3/18 mastered, last studied 2 days ago

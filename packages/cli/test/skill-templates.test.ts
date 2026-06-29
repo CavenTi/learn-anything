@@ -195,6 +195,22 @@ describe('Skill Template Content Quality', () => {
     expect(t.instructions).toContain('mkdir -p');
   });
 
+  it.each(['topic', 'explain', 'practice', 'review', 'quiz'])(
+    '%s template should warn about glob not matching hidden .learn directory',
+    (workflow) => {
+      const getters = {
+        topic: getLearnTopicSkillTemplate,
+        explain: getLearnExplainSkillTemplate,
+        practice: getLearnPracticeSkillTemplate,
+        review: getLearnReviewSkillTemplate,
+        quiz: getLearnQuizSkillTemplate,
+      } as const;
+      const t = getters[workflow]();
+      expect(t.instructions).toContain('hidden directory');
+      expect(t.instructions).toContain('ls -d .learn/topics/*/');
+    },
+  );
+
   it('review template should include spaced repetition', () => {
     const t = getLearnReviewSkillTemplate();
     expect(t.instructions).toContain('spaced repetition');

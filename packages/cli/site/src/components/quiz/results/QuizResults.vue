@@ -60,7 +60,9 @@ function formatAnswer(answer: QuizAnswer): string {
             <span v-else-if="result.correct === false" class="text-brand-2">✗</span>
             <span v-else class="text-text-3">○</span>
           </span>
-          <p class="flex-1 text-sm font-medium leading-relaxed text-text-1">
+          <p
+            class="flex-1 whitespace-pre-wrap break-words text-sm font-medium leading-relaxed text-text-1"
+          >
             {{ result.question.prompt }}
           </p>
         </div>
@@ -74,11 +76,11 @@ function formatAnswer(answer: QuizAnswer): string {
 
           <!-- Incorrect: show user's wrong answer + correct answer -->
           <template v-else-if="result.correct === false">
-            <div class="text-text-2">
+            <div class="whitespace-pre-wrap break-words text-text-2">
               <span class="text-text-3">{{ t('quiz.yourAnswer') }}:</span>
               {{ formatAnswer(result.userAnswer) }}
             </div>
-            <div class="text-text-2">
+            <div class="whitespace-pre-wrap break-words text-text-2">
               <span class="text-text-3">{{ t('quiz.correctAnswer') }}:</span>
               {{ formatAnswer(result.question.answer) }}
             </div>
@@ -86,11 +88,14 @@ function formatAnswer(answer: QuizAnswer): string {
 
           <!-- ai_only: show user's answer as reference -->
           <template v-else>
-            <div v-if="result.userAnswer !== null && result.userAnswer !== ''" class="text-text-2">
+            <div
+              v-if="result.userAnswer !== null && result.userAnswer !== ''"
+              class="whitespace-pre-wrap break-words text-text-2"
+            >
               <span class="text-text-3">{{ t('quiz.yourAnswer') }}:</span>
               {{ formatAnswer(result.userAnswer) }}
             </div>
-            <div class="text-text-2">
+            <div class="whitespace-pre-wrap break-words text-text-2">
               <span class="text-text-3">{{ t('quiz.referenceAnswer') }}:</span>
               {{ formatAnswer(result.question.answer) }}
             </div>
@@ -98,7 +103,10 @@ function formatAnswer(answer: QuizAnswer): string {
           </template>
 
           <!-- Explanation (all types) -->
-          <div v-if="result.question.explanation" class="pt-1 text-text-3">
+          <div
+            v-if="result.question.explanation"
+            class="whitespace-pre-wrap break-words pt-1 text-text-3"
+          >
             {{ result.question.explanation }}
           </div>
         </div>
