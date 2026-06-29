@@ -1,7 +1,16 @@
 #!/usr/bin/env node
-/* global process, setInterval, clearInterval, setTimeout, clearTimeout, URL */
+/* global process, setInterval, clearInterval, setTimeout, clearTimeout, URL, Buffer */
 import { createServer } from 'node:http';
-import { readFileSync, existsSync, readdirSync, statSync, watch } from 'node:fs';
+import {
+  readFileSync,
+  existsSync,
+  readdirSync,
+  statSync,
+  watch,
+  openSync,
+  readSync,
+  closeSync,
+} from 'node:fs';
 import { join, extname, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,6 +34,31 @@ const MIME = {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Detect whether a file is binary by inspecting its content (Git heuristic).
+ * Reads only the first 8 000 bytes; a NUL byte (0x00) means binary.
+ * Returns false on read errors so files are never hidden by accident.
+ */
+function isBinaryFile(filePath) {
+  let fd;
+  try {
+    fd = openSync(filePath, 'r');
+    const buf = Buffer.alloc(8000);
+    const bytesRead = readSync(fd, buf, 0, 8000, 0);
+    return buf.slice(0, bytesRead).includes(0);
+  } catch {
+    return false;
+  } finally {
+    if (fd !== undefined) {
+      try {
+        closeSync(fd);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
 
 function json(res, data, status = 200) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -213,12 +247,14 @@ function buildTopicData(slug) {
     for (const entry of eEntries) {
       if (entry.isDirectory()) {
         const conceptDir = join(exercisesDir, entry.name);
-        const files = readdirSync(conceptDir).map((f) => ({
-          name: f,
-          path: `/topics/${slug}/exercises/${entry.name}/${f}`,
-        }));
-        raw.set(entry.name, files);
-      } else if (entry.isFile()) {
+        const files = readdirSync(conceptDir, { withFileTypes: true })
+          .filter((f) => f.isFile() && !isBinaryFile(join(conceptDir, f.name)))
+          .map((f) => ({
+            name: f.name,
+            path: `/topics/${slug}/exercises/${entry.name}/${f.name}`,
+          }));
+        if (files.length > 0) raw.set(entry.name, files);
+      } else if (entry.isFile() && !isBinaryFile(join(exercisesDir, entry.name))) {
         rootExercises.push({
           name: entry.name,
           path: `/topics/${slug}/exercises/${entry.name}`,
