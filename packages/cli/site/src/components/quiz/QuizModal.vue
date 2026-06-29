@@ -5,6 +5,7 @@ import { useQuizQueue } from './useQuizQueue';
 import type { QuizDeck, QuizResults as QuizResultsData, QueueItem } from './types';
 import { useModalA11y } from '@/composables/useModalA11y';
 import { resolveQuizKey } from './useQuizKeyboard';
+import { toggleMultiSelect } from './utils';
 import { useQuizProgress, type ProgressSession, type ProgressQueue } from './useQuizProgress';
 import QuizResults from './results/QuizResults.vue';
 import QuizSummary from './QuizSummary.vue';
@@ -180,6 +181,11 @@ function onModalKeydown(e: KeyboardEvent) {
     case 'answer':
       s.setAnswer(s.currentQuestion.value.id, action.value);
       break;
+    case 'toggle': {
+      const qid = s.currentQuestion.value.id;
+      s.setAnswer(qid, toggleMultiSelect(s.getAnswer(qid), action.option));
+      break;
+    }
     case 'prev':
       onPrev();
       break;

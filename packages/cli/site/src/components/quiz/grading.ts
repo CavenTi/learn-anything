@@ -25,6 +25,10 @@ export function gradeQuestion(question: QuizQuestion, userAnswer: QuizAnswer): b
   if (userAnswer === null || userAnswer === undefined || userAnswer === '') return false;
 
   if (question.gradeable === 'exact') {
+    if (Array.isArray(question.answer) && Array.isArray(userAnswer)) {
+      if (userAnswer.length !== question.answer.length) return false;
+      return question.answer.every((a) => userAnswer.includes(a));
+    }
     return userAnswer === question.answer;
   }
 

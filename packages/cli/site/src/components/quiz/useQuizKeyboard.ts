@@ -26,6 +26,7 @@ export interface ResolveQuizKeyCtx {
 
 export type QuizKeyAction =
   | { type: 'answer'; value: string | boolean }
+  | { type: 'toggle'; option: string }
   | { type: 'prev' }
   | { type: 'next' }
   | { type: 'submit' };
@@ -58,7 +59,7 @@ export function resolveQuizKey(e: KeyboardEvent, ctx: ResolveQuizKeyCtx): QuizKe
       return { type: 'answer', value: key === '1' };
     }
 
-    if (q.type === 'multiple_choice') {
+    if (q.type === 'multiple_choice' || q.type === 'multi_select') {
       const opts = q.options ?? [];
       if (opts.length > 0 && key.length === 1) {
         let idx = -1;
@@ -66,7 +67,9 @@ export function resolveQuizKey(e: KeyboardEvent, ctx: ResolveQuizKeyCtx): QuizKe
         if (letter >= 'A' && letter <= 'Z') idx = letter.charCodeAt(0) - 65;
         if (key >= '1' && key <= '9') idx = parseInt(key, 10) - 1;
         if (idx >= 0 && idx < opts.length) {
-          return { type: 'answer', value: opts[idx]! };
+          return q.type === 'multi_select'
+            ? { type: 'toggle', option: opts[idx]! }
+            : { type: 'answer', value: opts[idx]! };
         }
       }
     }

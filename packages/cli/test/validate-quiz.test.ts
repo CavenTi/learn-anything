@@ -151,4 +151,96 @@ describe('validateQuizDeck', () => {
       true,
     );
   });
+
+  /* ---- multi_select ---- */
+
+  it('accepts a valid multi_select question', () => {
+    const deck = {
+      ...validDeck,
+      questions: [
+        {
+          id: 'q1',
+          type: 'multi_select',
+          gradeable: 'exact',
+          prompt: 'p',
+          explanation: 'e',
+          options: ['A', 'B', 'C', 'D'],
+          answer: ['A', 'C'],
+        },
+      ],
+    };
+    expect(validateQuizDeck(deck)).toEqual([]);
+  });
+
+  it('requires options[] (>=2) for multi_select', () => {
+    const deck = {
+      ...validDeck,
+      questions: [
+        {
+          id: 'q1',
+          type: 'multi_select',
+          gradeable: 'exact',
+          prompt: 'p',
+          explanation: 'e',
+          options: ['A'],
+          answer: ['A'],
+        },
+      ],
+    };
+    expect(validateQuizDeck(deck).some((e) => e.path === 'questions[0].options')).toBe(true);
+  });
+
+  it('requires answer to be an array (>=2) for multi_select', () => {
+    const deck = {
+      ...validDeck,
+      questions: [
+        {
+          id: 'q1',
+          type: 'multi_select',
+          gradeable: 'exact',
+          prompt: 'p',
+          explanation: 'e',
+          options: ['A', 'B', 'C'],
+          answer: 'A',
+        },
+      ],
+    };
+    expect(validateQuizDeck(deck).some((e) => e.path === 'questions[0].answer')).toBe(true);
+  });
+
+  it('rejects multi_select answer with only 1 element', () => {
+    const deck = {
+      ...validDeck,
+      questions: [
+        {
+          id: 'q1',
+          type: 'multi_select',
+          gradeable: 'exact',
+          prompt: 'p',
+          explanation: 'e',
+          options: ['A', 'B', 'C'],
+          answer: ['A'],
+        },
+      ],
+    };
+    expect(validateQuizDeck(deck).some((e) => e.path === 'questions[0].answer')).toBe(true);
+  });
+
+  it('rejects multi_select answer element not in options', () => {
+    const deck = {
+      ...validDeck,
+      questions: [
+        {
+          id: 'q1',
+          type: 'multi_select',
+          gradeable: 'exact',
+          prompt: 'p',
+          explanation: 'e',
+          options: ['A', 'B', 'C'],
+          answer: ['A', 'Z'],
+        },
+      ],
+    };
+    expect(validateQuizDeck(deck).some((e) => e.path === 'questions[0].answer[1]')).toBe(true);
+  });
 });

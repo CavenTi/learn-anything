@@ -35,6 +35,14 @@ Each quiz card SHALL render the appropriate input controls based on the question
 - **AND** only one option can be selected at a time
 - **AND** pressing A/B/C/D or 1-4 keys selects the corresponding option
 
+#### Scenario: Multi-select question
+
+- **WHEN** the current question has type `multi_select`
+- **THEN** all options from `question.options[]` are rendered as checkboxes
+- **AND** multiple options can be selected simultaneously
+- **AND** pressing A/B/C/D or 1-4 keys toggles the corresponding option in/out of the selection
+- **AND** selected options show a checkmark icon
+
 #### Scenario: True/false question
 
 - **WHEN** the current question has type `true_false`
@@ -98,6 +106,7 @@ The system SHALL support keyboard navigation within the quiz modal.
 - **AND** Enter submits the answer and advances (on the last question, shows results)
 - **AND** Escape closes the modal
 - **AND** A/B/C/D keys select multiple choice options (when applicable)
+- **AND** A/B/C/D keys toggle multi-select options (when applicable)
 
 ### Requirement: Transition animation
 

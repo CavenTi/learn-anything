@@ -17,7 +17,7 @@ ${HIDDEN_DIR_WARNING}
 ## Core Principles
 
 1. **One-shot flow** — generate the full deck, ask in chat, grade, done.
-2. **Text answers only** — multiple choice, true/false, fill-in-blank, spot-the-error. Never "write an implementation".
+2. **Text answers only** — multiple choice, multi-select, true/false, fill-in-blank, spot-the-error. Never "write an implementation".
 3. **Per-concept decks** — one quiz.json per concept, so results map cleanly to one concept in state.json and the dashboard can group by concept.
 4. **Grade honestly by type** — objective questions have a single answer; fuzzy questions carry accepted variants or a reference answer (see the schema below).
 5. **Persist for reuse** — always write the deck up front so the learner can re-practice it later without tokens.
@@ -56,6 +56,7 @@ Question types and their grading model — encode \`gradeable\` on every questio
 | type | gradeable | shape |
 |---|---|---|
 | \`multiple_choice\` | \`exact\` | \`options[]\` + \`answer\` = correct option text |
+| \`multi_select\` | \`exact\` | \`options[]\` + \`answer[]\` = correct option texts (≥2) |
 | \`true_false\` | \`exact\` | \`answer\` = \`true\` or \`false\` |
 | \`fill_in_blank\` | \`accepted\` | \`accepted_answers[]\` (common valid phrasings) + \`answer\` (canonical) |
 | \`error_correction\` | \`ai_only\` | \`answer\` = reference explanation of the bug (no auto-grade; self-check on re-practice) |
@@ -81,6 +82,8 @@ Use the concept name as-is from state.json. Schema (version 1):
   "questions": [
     { "id": "q1", "type": "multiple_choice", "gradeable": "exact",
       "prompt": "...", "options": ["A", "B", "C", "D"], "answer": "B", "explanation": "..." },
+    { "id": "q1b", "type": "multi_select", "gradeable": "exact",
+      "prompt": "...", "options": ["A", "B", "C", "D"], "answer": ["A", "C"], "explanation": "..." },
     { "id": "q2", "type": "true_false", "gradeable": "exact",
       "prompt": "...", "answer": false, "explanation": "..." },
     { "id": "q3", "type": "fill_in_blank", "gradeable": "accepted",
@@ -156,7 +159,7 @@ const COMMAND_CONTENT = `Use the learn-anything-quiz skill to handle the user's 
 Follow the single-flow workflow defined in the skill:
 1. Load context: match topic and concept from state.json (single source of truth); default quizzes one concept, a domain or "all" quizzes each touched concept
 2. Assess difficulty from each concept's confidence/status
-3. Generate the full deck up front (~5-8 questions per concept, text types only: multiple_choice, true_false, fill_in_blank, error_correction)
+3. Generate the full deck up front (~5-8 questions per concept, text types only: multiple_choice, multi_select, true_false, fill_in_blank, error_correction)
 4. Write ONE reusable deck per concept under ./.learn/topics/<topic>/quizzes/<concept-slug>/<concept-name>-quiz-<timestamp>.json (answers + explanations live only in the file)
 5. Present all questions in chat WITHOUT answers; collect one batched reply
 6. Grade by gradeable model (exact / accepted / ai_only) and give per-question feedback
