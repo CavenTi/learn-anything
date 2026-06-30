@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-06-30
+
+### Added
+
+- **Dashboard stats panel**: aggregated mastery overview via `useDashboardStats` — a segmented status progress bar with legend (`StatsHero`) plus a 3-column activity/content/recency summary (`StatsSummary`).
+- **Suggested review list**: a `ReviewPanel` on the dashboard backed by `useReview`, surfacing concepts that need attention (studied-not-practiced, needs reinforcement, low confidence, due for review), each with its own color accent.
+- **Topic Map/Progress view toggle**: a segmented toggle on the topic overview that switches the markdown Knowledge Map (default) to a width-constrained Progress view showing a topic-scoped mastery ledger, per-domain breakdown bars, an annotated knowledge tree (domains → concepts with status + confidence), and an activity strip. View state syncs to the `?view=` query param.
+- Shared `MasteryStats` interface so `StatsHero` is reusable across dashboard (global) and topic (scoped) contexts.
+- Full unit-test coverage for the new aggregators (`useDashboardStats`, `useReview`, `useTopicStats`).
+
 ## [1.5.6] - 2026-06-29
 
 ### Changed
@@ -295,7 +305,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale support: English (`en`) and Chinese (`zh-CN`).
 - MIT License.
 
-[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.6...HEAD
+[Unreleased]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.6...v1.6.0
 [1.5.6]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.5...v1.5.6
 [1.5.5]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/ChenChenyaqi/learn-anything/compare/v1.5.3...v1.5.4
